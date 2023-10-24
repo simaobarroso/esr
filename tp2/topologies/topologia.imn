@@ -90,7 +90,7 @@ node n5 {
     type router
     model router
     network-config {
-	hostname O7(RP)
+	hostname O7RP
 	!
 	interface eth3
 	 ip address 10.0.10.1/24
