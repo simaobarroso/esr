@@ -11,3 +11,4 @@ if __name__ == "__main__":
     # Criação do cliente 
     cl = client(ip_Dest,port_Dest)
     cl.sendMessage()
+    cl.receiveMessage()
