@@ -9,5 +9,6 @@ if __name__ == "__main__":
         print("ERRO: Não foram inseridos o IP do servidor, bem como a Porta do servidor, logo não é possível realizar a comunicação ... ")
     
     # Criação do servidor 
+    print("Servidor á escuta na porta "+ str(port_Server)+" com o IP "+str(ip_Server))
     sv = server(ip_Server,port_Server)
     sv.serverWork()
