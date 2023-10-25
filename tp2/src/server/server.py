@@ -3,7 +3,7 @@ Este servidor já é oNode uma vez que é basicamente cliente e servidor ao mesm
 """
 import socket
 import threading
-import time 
+
 class server:
     def __init__(self,ip,port):
         self.ip = ip # IP do servidor que queremos criar 

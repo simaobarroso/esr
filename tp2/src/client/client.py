@@ -1,4 +1,5 @@
 import socket
+import pickle
 class client:
     def __init__(self,ip,port):
         self.ip = ip # IP do servidor que é contactado pelo cliente
@@ -11,11 +12,12 @@ class client:
 
     def sendMessage(self):
         """ Envio de uma mensagem do cliente para o servidor escolhido """
-        message = "Isto é um teste para o checkpoint 1 de ESR ...".encode() 
+        message = "10.0.0.20".encode() # Mudar isto
         self.socket.sendto(message,(self.ip,self.port))
     
     def receiveMessage(self):
         message, address = self.socket.recvfrom(1024)
         print("O servidor com este endereço: %s enviou uma mensagem " % str(address))
-        print("Mensagem recebida : %s" % message.decode())
+        message_deserialized = pickle.loads(message)         # Mudar isto
+        print("Mensagem recebida : %s" % str(message_deserialized)) # Mudar isto 
     
