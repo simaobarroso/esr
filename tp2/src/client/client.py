@@ -1,12 +1,10 @@
 import socket
 import pickle
 class client:
-    def __init__(self,ip,port,ipHost):
-        self.ip = ip # IP do servidor que é contactado pelo cliente
-        self.port = int(port) # Número da porta do servidor que é contactado pelo cliente
+    def __init__(self,ipHost):
         self.ipHost = ipHost # IP do próprio cliente
         self.connectToNetwork() # Socket responsável pela conexão entre o cliente e o servidor
-        self.neighbors = []
+        self.neighbors_IP_Port = []
     
     def connectToNetwork(self):
         """ Criação do socket UDP para a ligação entre cliente e servidor """
@@ -27,8 +25,10 @@ class client:
         message, address = self.socket.recvfrom(1024)
         print("O servidor com este endereço: %s enviou uma mensagem " % str(address))
         neighbors = pickle.loads(message)
-        self.neighbors = neighbors[self.ipHost]
-        print("Lista de vizinhos: "+str(self.neighbors))
+        self.neighbors_IP_Port = neighbors[self.ipHost][0].split('-')
+        self.ip = self.neighbors_IP_Port[0]
+        self.port = int(self.neighbors_IP_Port[1])
+        print("Mensagem recebida: O servidor contactável é este: "+self.ip+" na porta: "+str(self.port))
 
     def receiveMessage(self):
         """ Receção de mensagens e tratamento das mesmas por parte do cliente """
