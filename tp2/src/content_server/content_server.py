@@ -5,10 +5,17 @@ Possui também um ficheiro com metadados dos vídeos que irá transmitir quando 
 """
 import socket
 import threading
+import json 
+import pickle
 
 class content_server:
-    def __init__(self,fileVideos):
+    def __init__(self,fileVideos,ip,port):
+        self.ip = ip
+        self.port = int(port) 
+        self.ip_RP="10.0.3.10"  # Isto tem de ser alterado, para o endereço IP do RP 
+        self.port_RP = 7777
         self.fileVideos = fileVideos # Ficheiro que contém os metadados dos vídeos que o servidor possui para transmissão
+        self.metadata = {}
         self.connectToNetwork()
     
     def connectToNetwork(self):
@@ -19,3 +26,25 @@ class content_server:
     def metadataVideos(self):
         """ Leitura dos metadados existentes no ficheiro self.fileVideos """
         f = open(self.fileVideos)
+        self.metadata = json.load(f)
+        f.close()
+
+    def sendFirstMessage(self):
+        """ Envio dos metadados dos vídeos que possui para o servidor bootstrapper """
+        message = pickle.dumps(self.metadata)         # A mensagem segue serializada 
+        self.socket.sendto(message,(self.ip_RP,self.port_RP))
+    
+    def content_serverDataTratament(self,message,address):
+        """ Função de tratamento de dados recebidos pelo servidor de bootstrapper """
+        print("O cliente com este endereço: %s submetou pedidos " % str(address))
+        print("Mensagem recebida : %s" % message.decode())
+
+    def content_serverWork(self):
+        """ Trabalho realizado pelo servidor de conteúdo para responder aos pedidos de transmissão feitos pelo servidor bootstrapper """
+        while True:
+            message, address = self.socket.recvfrom(1024)     # O servidor pode receber até 1024 bytes de informação
+            t1 = threading.Thread(target=self.content_serverDataTratament,args=(message,address),name='t1') # Criação de threads para responder aos pedidos do bootstrapper
+            t1.start()
+            t1.join()
+
+        self.socket.close()

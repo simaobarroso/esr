@@ -28,8 +28,8 @@ class bootstrapper:
     def bootstrapperDataTratament(self,message,address):
         """ Função de tratamento dos dados recebidos no socket UDP """
         print("O cliente com este endereço: %s submetou pedidos " % str(address))
-        print("Mensagem recebida : %s" % message.decode())
-        message = message.decode()   # Mensagem recebida pelo bootstrapper ->  É apenas um endereço IP
+        print("Mensagem recebida : %s" % str(message))
+        message = message.decode()   # Mensagem recebida pelo bootstrapper ->  É apenas um endereço IP, no caso de ser contactado pleos clientes no início de conexão
         answer = {message:self.data[message]}
         answer_serialized = pickle.dumps(answer)
         self.socket.sendto(answer_serialized,address)
