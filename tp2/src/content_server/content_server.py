@@ -31,7 +31,7 @@ class content_server:
 
     def sendFirstMessage(self):
         """ Envio dos metadados dos vídeos que possui para o servidor bootstrapper """
-        message = pickle.dumps(self.metadata)         # A mensagem segue serializada 
+        message = pickle.dumps({"type":2,"data":self.metadata})         # A mensagem segue serializada 
         self.socket.sendto(message,(self.ip_RP,self.port_RP))
     
     def content_serverDataTratament(self,message,address):

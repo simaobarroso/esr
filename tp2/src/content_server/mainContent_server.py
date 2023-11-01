@@ -12,5 +12,6 @@ if __name__ == "__main__":
     # Criação do servidores de conteúdo 
     print("Servidor á escuta na porta "+ str(port_Server)+" com o IP "+str(ip_Server))
     content_server = content_server(fileMetadados,ip_Server,port_Server)
+    content_server.metadataVideos()
     content_server.sendFirstMessage()
     content_server.content_serverWork()

@@ -17,7 +17,7 @@ class client:
     
     def sendFirstMessage(self,ip,port):
         """ Envio da mensagem inicial de um cliente para um bootstrapper """
-        message = self.ipHost.encode()
+        message =pickle.dumps({"type":1,"ip":self.ipHost})
         self.socket.sendto(message,(ip,port))
 
     def receiveFirstMessage(self):
