@@ -9,10 +9,10 @@ import json
 import pickle
 
 class content_server:
-    def __init__(self,fileVideos,ip,port):
+    def __init__(self,fileVideos,ip,port,ipBootStrapper):
         self.ip = ip
         self.port = int(port) 
-        self.ip_RP="10.0.3.10"  # Isto tem de ser alterado, para o endereço IP do RP 
+        self.ip_RP= ipBootStrapper
         self.port_RP = 7777
         self.fileVideos = fileVideos # Ficheiro que contém os metadados dos vídeos que o servidor possui para transmissão
         self.metadata = {}
