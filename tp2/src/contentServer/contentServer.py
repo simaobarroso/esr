@@ -8,12 +8,12 @@ import threading
 import json 
 import pickle
 
-class content_server:
-    def __init__(self,fileMetadados,ip,port,ipBootStrapper):
+class contentServer:
+    def __init__(self,fileMetadados,ip,port,ipBootStrapper,portBootStrapper):
         self.ip = ip
         self.port = int(port) 
         self.ip_RP= ipBootStrapper
-        self.port_RP = 7777
+        self.port_RP = portBootStrapper
         self.fileVideos = fileMetadados
         self.metadata = {}
         self.connectToNetwork()
