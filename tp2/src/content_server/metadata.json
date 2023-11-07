@@ -1,17 +1,5 @@
 {
     "video1":{
-        "name":"video1.mp4",
-        "numberFrames":16,
-        "tamanhoGlobal":"150mbps"
-    },
-    "video2":{
-        "name":"video2.mp4",
-        "numberFrames":20,
-        "tamanhoGlobal":"190mbps"
-    },
-    "videoTeste":{
-        "name":"videoTeste.mp4",
-        "numberFrames":25,
-        "tamanhoGlobal":"210mbps"
+        "name":"movie.Mjpeg"
     }
 }
