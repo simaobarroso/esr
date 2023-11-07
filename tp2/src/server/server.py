@@ -3,11 +3,14 @@ Este servidor já é oNode uma vez que é basicamente cliente e servidor ao mesm
 """
 import socket
 import threading
+import pickle
 
 class server:
-    def __init__(self,ip,port):
+    def __init__(self,ip,port,ipBootStrapper,portBootStrapper):
         self.ip = ip # IP do servidor que queremos criar 
         self.port = int(port) # Porta do servidor com a qual queremos estabelecer conexão
+        self.ipBootStrapper = ipBootStrapper
+        self.portBootStrapper = portBootStrapper
         self.connectToNetwork()
 
     def connectToNetwork(self):
@@ -23,6 +26,21 @@ class server:
         # Envio da resposta ao cliente 
         answer = "Teste de resposta a um cliente por parte de um servidor oNode ...".encode()
         self.socket.sendto(answer,address)
+
+    def sendFirstMessage(self,ip,port):
+        """ Envio da mensagem inicial de um servidor oNode para um bootstrapper, para saber os seus vizinhos """
+        message =pickle.dumps({"type":1,"ip":self.ip})
+        self.socket.sendto(message,(ip,port))
+    
+    def receiveFirstMessage(self):
+        """ Receção da primeira mensagem vinda do bootstrapper e tratamento da mesma """
+        message, address = self.socket.recvfrom(1024)
+        print("O servidor com este endereço: %s enviou uma mensagem " % str(address))
+        neighbors = pickle.loads(message)
+        self.neighbors_IP_Port = neighbors[self.ipHost][0].split('-')
+        self.ip = self.neighbors_IP_Port[0]
+        self.port = int(self.neighbors_IP_Port[1])
+        print("Mensagem recebida: O servidor contactável é este: "+self.ip+" na porta: "+str(self.port))
 
     def serverWork(self):
         """ Trabalho realizado pelo servidor para responder aos pedidos feitos pelos clientes """
