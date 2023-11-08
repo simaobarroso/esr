@@ -14,4 +14,5 @@ if __name__ == "__main__":
     print("Servidor á escuta na porta "+ str(port_Server)+" com o IP "+str(ip_Server))
     sv = server(ip_Server,port_Server,ipBootStrapper,int(portBootStrapper))
     sv.sendFirstMessage(ipBootStrapper,int(portBootStrapper))
+    sv.receiveFirstMessage()
     sv.serverWork()

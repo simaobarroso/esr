@@ -37,10 +37,8 @@ class server:
         message, address = self.socket.recvfrom(1024)
         print("O servidor com este endereço: %s enviou uma mensagem " % str(address))
         neighbors = pickle.loads(message)
-        self.neighbors_IP_Port = neighbors[self.ipHost][0].split('-')
-        self.ip = self.neighbors_IP_Port[0]
-        self.port = int(self.neighbors_IP_Port[1])
-        print("Mensagem recebida: O servidor contactável é este: "+self.ip+" na porta: "+str(self.port))
+        self.neighbors = neighbors[self.ip]
+        print("Mensagem recebida: Os servidores contactáveis são estes: "+str(self.neighbors))
 
     def serverWork(self):
         """ Trabalho realizado pelo servidor para responder aos pedidos feitos pelos clientes """
