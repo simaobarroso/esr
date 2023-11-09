@@ -32,11 +32,12 @@ class bootstrapper:
         if message["type"] == 1:
             print("Mensagem recebida : %s" % str(message))
             message = message["ip"]  # Mensagem recebida pelo bootstrapper ->  É apenas um endereço IP, no caso de ser contactado pleos clientes no início de conexão
-            answer = {message:self.data[message]}
-            answer_serialized = pickle.dumps(answer)
-            self.socket.sendto(answer_serialized,address)
+            answer=pickle.dumps({"type":1,"data":self.data[message]})
+            self.socket.sendto(answer,address)
         elif message["type"] == 2:  
             print("Mensagem recebida: %s" % str(message))
+        elif message["type"] == 3:
+            self.socket.sendto("I'm the RP".encode(),address)
 
     def bootstrapperWork(self):
         """ Trabalho realizado pelo servidor bootstrapper para responder aos pedidos feitos pelos clientes """

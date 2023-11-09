@@ -11,6 +11,7 @@ class server:
         self.port = int(port) # Porta do servidor com a qual queremos estabelecer conexão
         self.ipBootStrapper = ipBootStrapper
         self.portBootStrapper = portBootStrapper
+        self.runningVideos = []
         self.connectToNetwork()
 
     def connectToNetwork(self):
@@ -36,9 +37,17 @@ class server:
         """ Receção da primeira mensagem vinda do bootstrapper e tratamento da mesma """
         message, address = self.socket.recvfrom(1024)
         print("O servidor com este endereço: %s enviou uma mensagem " % str(address))
-        neighbors = pickle.loads(message)
-        self.neighbors = neighbors[self.ip]
-        print("Mensagem recebida: Os servidores contactáveis são estes: "+str(self.neighbors))
+        message = pickle.loads(message)
+        if message["type"] == 1: # Pedido dos vizinhos por parte de um router ao RP
+            self.neighbors = message["data"]
+            print("Mensagem recebida: Os servidores contactáveis são estes: "+str(self.neighbors))
+        elif message["type"] == 3 : # Pedido de flooding recebido por um router
+            print("Reenchaminhamento das mensagens de flood ...")
+        elif message["Type"] == 4: # Pedido de streaming de um vídeo por parte de um cliente 
+            if message["nameVideo"] in self.runningVideos:
+                print("Vou dar a streaming de vídeo que o cliente pediu ...")
+            else :
+                print("Acontece a mesma coisa que no message[type] == 3")
 
     def serverWork(self):
         """ Trabalho realizado pelo servidor para responder aos pedidos feitos pelos clientes """
