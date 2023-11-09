@@ -12,6 +12,7 @@ class server:
         self.ipBootStrapper = ipBootStrapper
         self.portBootStrapper = portBootStrapper
         self.runningVideos = []
+        self.paths = {} # Dicionário que armazena os caminhos recebidos por um determinado servidor 
         self.connectToNetwork()
 
     def connectToNetwork(self):
@@ -24,7 +25,18 @@ class server:
         # Tratamento da mensagem por parte do servidor
         message = pickle.loads(message)
         if message["type"] == 3 : # Pedido de flooding recebido por um router
-            print("Reenchaminhamento das mensagens de flood ...")
+            if message["subtype"] == 'request': # Pedido do flood
+                # Temos de propagar o flood para os vizinhos do servidor 
+                print("Flood da rede propagado para as vizinhos ...")
+                message=pickle.dumps({"type":3,"subtype":'request'})
+                for a in self.neighbors:
+                    ip_Porta = a.split('-')
+                    ip = a[0]
+                    port = int(a[1])
+                    self.socket.sendto(message,(ip,port))
+            else : # Resposta do Flood 
+                # Temos de propagar a resposta que o RP deu para o flood da rede, para os vizinhos 
+                print("Esta parte é para a resposta de flood")
         elif message["Type"] == 4: # Pedido de streaming de um vídeo por parte de um cliente 
             if message["nameVideo"] in self.runningVideos:
                 print("Vou dar a streaming de vídeo que o cliente pediu ...")
