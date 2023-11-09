@@ -22,11 +22,14 @@ class server:
     def dataTratament(self,message,address):
         """ Função de tratamento dos dados recebidos no socket UDP """
         # Tratamento da mensagem por parte do servidor
-        print("O cliente com este endereço: %s submetou pedidos " % str(address))
-        print("Mensagem recebida : %s" % message.decode())
-        # Envio da resposta ao cliente 
-        answer = "Teste de resposta a um cliente por parte de um servidor oNode ...".encode()
-        self.socket.sendto(answer,address)
+        message = pickle.loads(message)
+        if message["type"] == 3 : # Pedido de flooding recebido por um router
+            print("Reenchaminhamento das mensagens de flood ...")
+        elif message["Type"] == 4: # Pedido de streaming de um vídeo por parte de um cliente 
+            if message["nameVideo"] in self.runningVideos:
+                print("Vou dar a streaming de vídeo que o cliente pediu ...")
+            else :
+                print("Acontece a mesma coisa que no message[type] == 3")
 
     def sendFirstMessage(self,ip,port):
         """ Envio da mensagem inicial de um servidor oNode para um bootstrapper, para saber os seus vizinhos """
@@ -41,13 +44,6 @@ class server:
         if message["type"] == 1: # Pedido dos vizinhos por parte de um router ao RP
             self.neighbors = message["data"]
             print("Mensagem recebida: Os servidores contactáveis são estes: "+str(self.neighbors))
-        elif message["type"] == 3 : # Pedido de flooding recebido por um router
-            print("Reenchaminhamento das mensagens de flood ...")
-        elif message["Type"] == 4: # Pedido de streaming de um vídeo por parte de um cliente 
-            if message["nameVideo"] in self.runningVideos:
-                print("Vou dar a streaming de vídeo que o cliente pediu ...")
-            else :
-                print("Acontece a mesma coisa que no message[type] == 3")
 
     def serverWork(self):
         """ Trabalho realizado pelo servidor para responder aos pedidos feitos pelos clientes """

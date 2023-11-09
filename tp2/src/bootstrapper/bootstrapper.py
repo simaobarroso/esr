@@ -29,14 +29,14 @@ class bootstrapper:
         """ Função de tratamento dos dados recebidos no socket UDP """
         print("O cliente com este endereço: %s submetou pedidos " % str(address))
         message = pickle.loads(message)
-        if message["type"] == 1:
+        if message["type"] == 1: # Resposta a pedidos dos routers, para saberem os seus vizinhos
             print("Mensagem recebida : %s" % str(message))
             message = message["ip"]  # Mensagem recebida pelo bootstrapper ->  É apenas um endereço IP, no caso de ser contactado pleos clientes no início de conexão
             answer=pickle.dumps({"type":1,"data":self.data[message]})
             self.socket.sendto(answer,address)
-        elif message["type"] == 2:  
+        elif message["type"] == 2:  # Receção do ficheiro de metadados proveniente do servidor de conteúdos
             print("Mensagem recebida: %s" % str(message))
-        elif message["type"] == 3:
+        elif message["type"] == 3:  # Resposta ás mensagens de flood recebidas pelo RP 
             self.socket.sendto("I'm the RP".encode(),address)
 
     def bootstrapperWork(self):
