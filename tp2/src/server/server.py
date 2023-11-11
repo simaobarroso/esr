@@ -11,7 +11,7 @@ class server:
         self.port = int(port) # Porta do servidor com a qual queremos estabelecer conexão
         self.ipBootStrapper = ipBootStrapper
         self.portBootStrapper = portBootStrapper
-        self.runningVideos = []
+        self.runningVideos = ["teste.Mjpeg"]  # TEM DE SER ALTERADO 
         self.paths = {} # Dicionário que armazena os caminhos recebidos por um determinado servidor 
         self.connectToNetwork()
 
@@ -27,21 +27,27 @@ class server:
         if message["type"] == 3 : # Pedido de flooding recebido por um router
             if message["subtype"] == 'request': # Pedido do flood
                 # Temos de propagar o flood para os vizinhos do servidor 
-                print("Flood da rede propagado para as vizinhos ...")
+                print("Flood da rede propagado para os vizinhos ...")
                 message=pickle.dumps({"type":3,"subtype":'request'})
                 for a in self.neighbors:
                     ip_Porta = a.split('-')
-                    ip = a[0]
-                    port = int(a[1])
+                    ip = ip_Porta[0]
+                    port = int(ip_Porta[1])
                     self.socket.sendto(message,(ip,port))
             else : # Resposta do Flood 
                 # Temos de propagar a resposta que o RP deu para o flood da rede, para os vizinhos 
                 print("Esta parte é para a resposta de flood")
-        elif message["Type"] == 4: # Pedido de streaming de um vídeo por parte de um cliente 
+        elif message["type"] == 4 and message["subtype"] == 'request': # Pedido de streaming de um vídeo por parte de um cliente 
             if message["nameVideo"] in self.runningVideos:
                 print("Vou dar a streaming de vídeo que o cliente pediu ...")
             else :
-                print("Acontece a mesma coisa que no message[type] == 3")
+                print("Flood da rede propagado para os vizinhos ...")
+                message=pickle.dumps({"type":3,"subtype":'request'})
+                for a in self.neighbors:
+                    ip_Porta = a.split('-')
+                    ip = ip_Porta[0]
+                    port = int(ip_Porta[1])
+                    self.socket.sendto(message,(ip,port))
 
     def sendFirstMessage(self,ip,port):
         """ Envio da mensagem inicial de um servidor oNode para um bootstrapper, para saber os seus vizinhos """
