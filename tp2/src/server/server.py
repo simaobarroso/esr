@@ -37,6 +37,16 @@ class server:
                         port = int(ip_Porta[1])
                         if ip != address[0]:
                             self.socket.sendto(message,(ip,port))
+            elif message["subtype"] == 'answer':
+                print("Answer da rede propagado para os vizinhos ...")
+                print(str(address))
+                message = pickle.dumps(message)
+                for a in self.neighbors:
+                    ip_Porta = a.split('-')
+                    ip = ip_Porta[0]
+                    port = int(ip_Porta[1])
+                    if ip != address[0] and ip != "10.0.10.1":  # Não pode enviar de volta a mensagem para os seus vizinhos, nem para o RP se esse for seu vizinho
+                        self.socket.sendto(message,(ip,port))
 
     def sendFirstMessage(self,ip,port):
         """ Envio da mensagem inicial de um servidor oNode para um bootstrapper, para saber os seus vizinhos """

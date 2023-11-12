@@ -13,6 +13,8 @@ class bootstrapper:
         self.fileNetwork = fileNetwork # Nome do ficheiro que possui a topologia da rede 
         self.connectToNetwork()
         self.dataNetwork()
+        self.lock = threading.Lock()
+        self.trees = {}
     
     def connectToNetwork(self):
         """ Criação do socket UDP a partir do qual o servidor bootstrapper irá receber pedidos dos clientes """
@@ -36,8 +38,17 @@ class bootstrapper:
             self.socket.sendto(answer,address)
         elif message["type"] == 2:  # Receção do ficheiro de metadados proveniente do servidor de conteúdos
             print("Mensagem recebida: %s" % str(message))
-        elif message["type"] == 3:  # Resposta ás mensagens de flood recebidas pelo RP 
-            self.socket.sendto("I'm the RP".encode(),address)
+        elif message["type"] == 4:
+            if message["subtype"] == 'request':  # Resposta ás mensagens de flood recebidas pelo RP 
+                print("Estou a responder a pedidos de streams dos clientes ...")
+                self.lock.acquire()
+                try:
+                    self.trees[address] = message["nameVideo"]
+                finally:
+                    self.lock.release()
+                answer=pickle.dumps({"type":4,"subtype":"answer","data":"I'm the RP ..."})
+                self.socket.sendto(answer,address)
+
 
     def bootstrapperWork(self):
         """ Trabalho realizado pelo servidor bootstrapper para responder aos pedidos feitos pelos clientes """
