@@ -39,7 +39,6 @@ class server:
                             self.socket.sendto(message,(ip,port))
             elif message["subtype"] == 'answer':
                 print("Answer da rede propagado para os vizinhos ...")
-                print(str(address))
                 message = pickle.dumps(message)
                 for a in self.neighbors:
                     ip_Porta = a.split('-')
