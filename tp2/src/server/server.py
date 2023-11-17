@@ -11,7 +11,8 @@ class server:
         self.port = int(port) # Porta do servidor com a qual queremos estabelecer conexão
         self.ipBootStrapper = ipBootStrapper
         self.portBootStrapper = portBootStrapper
-        self.runningVideos = []
+        self.runningVideos = ["teste.Mjpeg"]  # TEM DE SER ALTERADO 
+        self.paths = {} # Dicionário que armazena os caminhos recebidos por um determinado servidor 
         self.connectToNetwork()
 
     def connectToNetwork(self):
@@ -23,13 +24,28 @@ class server:
         """ Função de tratamento dos dados recebidos no socket UDP """
         # Tratamento da mensagem por parte do servidor
         message = pickle.loads(message)
-        if message["type"] == 3 : # Pedido de flooding recebido por um router
-            print("Reenchaminhamento das mensagens de flood ...")
-        elif message["Type"] == 4: # Pedido de streaming de um vídeo por parte de um cliente 
-            if message["nameVideo"] in self.runningVideos:
-                print("Vou dar a streaming de vídeo que o cliente pediu ...")
-            else :
-                print("Acontece a mesma coisa que no message[type] == 3")
+        if message["type"] == 4 : # Se o tipo da mensagem for de pedir uma stream de video por parte de um cliente 
+            if message["subtype"] == 'request': # Pedido de streaming de um vídeo por parte de um cliente 
+                if message["nameVideo"] in self.runningVideos: # O router possui as streams de vídeo desejadas 
+                    print("Vou dar a streaming de vídeo que o cliente pediu ...")
+                else : # O router não possui a stream de vídeo desejada, logo terá de perguntar aos vizinhos se têm 
+                    print("Flood da rede propagado para os vizinhos ...")
+                    message=pickle.dumps({"type":4,"subtype":"request","nameVideo":message["nameVideo"]})
+                    for a in self.neighbors:
+                        ip_Porta = a.split('-')
+                        ip = ip_Porta[0]
+                        port = int(ip_Porta[1])
+                        if ip != address[0]:
+                            self.socket.sendto(message,(ip,port))
+            elif message["subtype"] == 'answer':
+                print("Answer da rede propagado para os vizinhos ...")
+                message = pickle.dumps(message)
+                for a in self.neighbors:
+                    ip_Porta = a.split('-')
+                    ip = ip_Porta[0]
+                    port = int(ip_Porta[1])
+                    if ip != address[0] and ip != "10.0.10.1":  # Não pode enviar de volta a mensagem para os seus vizinhos, nem para o RP se esse for seu vizinho
+                        self.socket.sendto(message,(ip,port))
 
     def sendFirstMessage(self,ip,port):
         """ Envio da mensagem inicial de um servidor oNode para um bootstrapper, para saber os seus vizinhos """

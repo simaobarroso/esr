@@ -11,8 +11,9 @@ class client:
         self.socket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
 
     def sendMessage(self):
-        """ Envio de uma mensagem do cliente para o servidor escolhido """
-        message = "Esta mensagem é um teste há conexão da rede, para a etapa 1 do TP de ESR ...".encode()
+        """ Envio de uma mensagem do cliente para o servidor vizinho """
+        print("VOU ENVIAR UMA MENSAGEM PARA O MEU VIZINHO A PEDIR UMA STREAM DE VÍDEO")
+        message = pickle.dumps({"type":4,"subtype":"request","nameVideo":"movie.Mjpeg"}) # Mensagem de um cliente para o servidor vizinho, para pedir uma stream 
         self.socket.sendto(message,(self.ip,self.port))
     
     def sendFirstMessage(self,ip,port):
@@ -25,9 +26,10 @@ class client:
         message, address = self.socket.recvfrom(1024)
         print("O servidor com este endereço: %s enviou uma mensagem " % str(address))
         neighbors = pickle.loads(message)
-        self.neighbors_IP_Port = neighbors[self.ipHost][0].split('-')
-        self.ip = self.neighbors_IP_Port[0]
-        self.port = int(self.neighbors_IP_Port[1])
+        data = neighbors["data"][0]
+        listData = data.split('-')
+        self.ip = listData[0]
+        self.port = int(listData[1])
         print("Mensagem recebida: O servidor contactável é este: "+self.ip+" na porta: "+str(self.port))
 
     def receiveMessage(self):
