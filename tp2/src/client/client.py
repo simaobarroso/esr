@@ -13,7 +13,7 @@ class client:
     def sendMessage(self):
         """ Envio de uma mensagem do cliente para o servidor vizinho """
         print("VOU ENVIAR UMA MENSAGEM PARA O MEU VIZINHO A PEDIR UMA STREAM DE VÍDEO")
-        message = pickle.dumps({"type":4,"subtype":"request","id":self.ipHost,"nameVideo":"movie.Mjpeg"}) # Mensagem de um cliente para o servidor vizinho, para pedir uma stream 
+        message = pickle.dumps({"type":3,"subtype":"request","id":self.ipHost,"nameVideo":"movie.Mjpeg"}) # Mensagem de um cliente para o servidor vizinho, para pedir uma stream 
         self.socket.sendto(message,(self.ip,self.port))
     
     def sendFirstMessage(self,ip,port):
@@ -32,9 +32,14 @@ class client:
         self.port = int(listData[1])
         print("Mensagem recebida: O servidor contactável é este: "+self.ip+" na porta: "+str(self.port))
 
+    def dataTratamentType3(self, message,address):
+        """ Função de tratamento de dados para mensagens com o type == 3 """
+        message = pickle.loads(message)
+        if message["subtype"] == 'answer': # Pedido de streaming de um vídeo por parte de um cliente 
+            print(message)
+                
     def receiveMessage(self):
         """ Receção de mensagens e tratamento das mesmas por parte do cliente """
         message, address = self.socket.recvfrom(1024)
-        print("O servidor com este endereço: %s enviou uma mensagem " % str(address))
-        print("Mensagem recebida : %s" % str(message.decode()))
+        self.dataTratamentType3(message,address)
     

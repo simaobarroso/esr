@@ -15,26 +15,22 @@ class server:
         self.paths = {} # Dicionário que armazena os caminhos recebidos por um determinado servidor 
         self.connectToNetwork()
         self.messages={}
-
+        self.clients=[]
 
     def connectToNetwork(self):
         """ Criação do socket UDP a partir do qual o servidor irá receber pedidos dos clientes """
         self.socket = socket.socket (socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind((self.ip,self.port))
 
-    def dataTratament(self,message,address):
-        """ Função de tratamento dos dados recebidos no socket UDP """
-        # Tratamento da mensagem por parte do servidor
-        message = pickle.loads(message)
-        print(message)
-        if message["type"] == 4 : # Se o tipo da mensagem for de pedir uma stream de video por parte de um cliente 
-            if message["subtype"] == 'request': # Pedido de streaming de um vídeo por parte de um cliente 
+    def dataTratamentType3(self, message,address):
+        """ Função de tratamento de dados para mensagens com o type == 3 """
+        self.clients.append(address)
+        if message["subtype"] == 'request': # Pedido de streaming de um vídeo por parte de um cliente 
                 if message["nameVideo"] in self.runningVideos: # O router possui as streams de vídeo desejadas 
                     print("Vou dar a streaming de vídeo que o cliente pediu ...")
                 else : # O router não possui a stream de vídeo desejada, logo terá de perguntar aos vizinhos se têm 
                     print("Flood da rede propagado para os vizinhos ...")
                     self.messages[message["id"]]=address
-                    #print(self.messages)
                     id_message=message["id"]
                     message=pickle.dumps({"type":4,"subtype":"request","id":id_message,"nameVideo":message["nameVideo"]})
                     for a in self.neighbors:
@@ -43,28 +39,44 @@ class server:
                         port = int(ip_Porta[1])
                         if ip != address[0]:
                             self.socket.sendto(message,(ip,port))
-                            #print("Enviei uma mensagem de pedido de stream para "+ip+":"+str(port) )
-            elif message["subtype"] == 'answer':
+
+    def dataTratamentType4(self,message,address):
+        """ Função de tratamento de dados para mensagens com o type == 4 """
+        if message["subtype"] == 'request':
+                if message["nameVideo"] in self.runningVideos: # O router possui as streams de vídeo desejadas por isso vou mandar para o router vizinho
+                    print("Vou dar a streaming de vídeo que o cliente pediu ...")
+                else : # O router não possui a stream de vídeo desejada, logo terá de perguntar aos vizinhos se têm 
+                    print("Flood da rede propagado para os vizinhos ...")
+                    self.messages[message["id"]]=address
+                    id_message=message["id"]
+                    message=pickle.dumps({"type":4,"subtype":"request","id":id_message,"nameVideo":message["nameVideo"]})
+                    for a in self.neighbors:
+                        ip_Porta = a.split('-')
+                        ip = ip_Porta[0]
+                        port = int(ip_Porta[1])
+                        if ip != address[0]:
+                            self.socket.sendto(message,(ip,port))
+        elif message["subtype"] == 'answer':
                 print("Answer da rede propagado para quem enviou a pergunta")
                 ip_dest= self.messages[message["id"]]
                 message = pickle.dumps(message)
-                #self.socket.sendto(message,(ip_dest,port))
-                """
                 for a in self.neighbors:
                     ip_Porta = a.split('-')
                     ip = ip_Porta[0]
                     port = int(ip_Porta[1])
-                    if ip != address[0] and ip != "10.0.10.1":  # Não pode enviar de volta a mensagem para os seus vizinhos, nem para o RP se esse for seu vizinho
-                        self.socket.sendto(message,(ip,port))
-                """
-                for a in self.neighbors:
-                    ip_Porta = a.split('-')
-                    ip = ip_Porta[0]
-                    port = int(ip_Porta[1])
-                    print(ip)
                     if ip==ip_dest:
                         self.socket.sendto(message,(ip_dest,port))
-                        print ("Enviei uma mensagem para "+ip_dest )
+                for cl in self.clients:
+                    message=pickle.dumps({"type":3,"subtype":"answer","id":ip_dest,"data":"A stream pedida irá ser transmitida ..."})
+                    self.socket.sendto(message,cl)
+                self.clients = []
+    def dataTratament(self,message,address):
+        """ Função de tratamento dos dados recebidos no socket UDP """
+        message = pickle.loads(message)
+        if message["type"] == 3 : # Se o tipo da mensagem for de pedir uma stream de video por parte de um cliente 
+            self.dataTratamentType3(message,address)
+        if message["type"] == 4: # Se o tipo da mensagem for de fazer flood na rede 
+            self.dataTratamentType4(message,address)
 
     def sendFirstMessage(self,ip,port):
         """ Envio da mensagem inicial de um servidor oNode para um bootstrapper, para saber os seus vizinhos """
