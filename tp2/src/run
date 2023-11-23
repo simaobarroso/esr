@@ -1,2 +1,0 @@
-cd /home/core/Desktop/esr/tp2 
-python3 mainBootrstrapper.py 10.0.5.1 7777 network.json

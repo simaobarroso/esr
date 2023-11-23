@@ -33,11 +33,22 @@ class contentServer:
         """ Envio dos metadados dos vídeos que possui para o servidor bootstrapper """
         message = pickle.dumps({"type":2,"data":self.metadata})         # A mensagem segue serializada 
         self.socket.sendto(message,(self.ip_RP,self.port_RP))
-    
+
+    def dataTratamentType5(self,message,address):
+        """ Função de tratamento de dados para mensagens com o type == 5 """
+        if message["subtype"] == 'request' : # Pedido de uma stream de vídeo por parte de um RP ao contentServer 
+            if message["data"] == self.metadata["nameMovie"]:
+                answer = pickle.dumps({"type":5,"subtype":"answer","data":"Frames do vídeo irão ser enviados ..."})
+                self.socket.sendto(answer,address)
+            else:
+                answer = pickle.dumps({"type":5,"subtype":"answer","data":"Não possuo esse vídeo ..."})
+                self.socket.sendto(answer,address)
+
     def content_serverDataTratament(self,message,address):
         """ Função de tratamento de dados recebidos pelo servidor de bootstrapper """
-        print("O cliente com este endereço: %s submetou pedidos " % str(address))
-        print("Mensagem recebida : %s" % message.decode())
+        message = pickle.loads(message)
+        if message["type"] == 5:
+            self.dataTratamentType5(message,address)
 
     def content_serverWork(self):
         """ Trabalho realizado pelo servidor de conteúdo para responder aos pedidos de transmissão feitos pelo servidor bootstrapper """

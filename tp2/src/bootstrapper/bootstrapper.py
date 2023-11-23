@@ -15,6 +15,7 @@ class bootstrapper:
         self.dataNetwork()
         self.lock = threading.Lock()
         self.trees = {}
+        self.movies = []
     
     def connectToNetwork(self):
         """ Criação do socket UDP a partir do qual o servidor bootstrapper irá receber pedidos dos clientes """
@@ -27,29 +28,44 @@ class bootstrapper:
         self.data = json.load(f)
         f.close()
 
+    def dataTratamentType2(self,message,address):
+        """ Função de tratamento de dados para mensagens com o type == 2 """
+        self.movies.append(message["data"]["nameMovie"])
+        self.ipContentServer = address
+
+    def dataTratamentType4(self,message,address):
+        """ Função de tratamento de dados para mensagens com o type == 4 """
+        if message["subtype"] == 'request':  # Resposta ás mensagens de flood recebidas pelo RP 
+                if message["nameVideo"] in self.movies:
+                    self.lock.acquire()
+                    try:
+                        self.trees[address] = message["nameVideo"]
+                    finally:
+                        self.lock.release()
+                    answer=pickle.dumps({"type":4,"subtype":"answer","id":message["id"],"data":"I'm the RP ..."})
+                    self.socket.sendto(answer,address)
+                    request = pickle.dumps({"type":5,"subtype":"request","data":message["nameVideo"]})
+                    self.socket.sendto(request,self.ipContentServer)
+
+    def dataTratamentType5(self,message):
+        """ Função de tratamento de dados para mensagens com o type == 5 """
+        if message["subtype"] == 'answer':  # Resposta ás mensagens de flood recebidas pelo RP 
+            print(message)
     def bootstrapperDataTratament(self,message,address):
         """ Função de tratamento dos dados recebidos no socket UDP """
         print("O cliente com este endereço: %s submetou pedidos " % str(address))
         message = pickle.loads(message)
-        #print(message)
         if message["type"] == 1: # Resposta a pedidos dos routers, para saberem os seus vizinhos
             print("Mensagem recebida : %s" % str(message))
             message = message["ip"]  # Mensagem recebida pelo bootstrapper ->  É apenas um endereço IP, no caso de ser contactado pelos clientes no início de conexão
             answer=pickle.dumps({"type":1,"data":self.data[message]})
             self.socket.sendto(answer,address)
         elif message["type"] == 2:  # Receção do ficheiro de metadados proveniente do servidor de conteúdos
-            print("Mensagem recebida: %s" % str(message))
+            self.dataTratamentType2(message,address)
         elif message["type"] == 4:
-            if message["subtype"] == 'request':  # Resposta ás mensagens de flood recebidas pelo RP 
-                print("Estou a responder a pedidos de streams dos clientes ...")
-                self.lock.acquire()
-                try:
-                    self.trees[address] = message["nameVideo"]
-                finally:
-                    self.lock.release()
-                answer=pickle.dumps({"type":4,"subtype":"answer","id":message["id"],"data":"I'm the RP ..."})
-                self.socket.sendto(answer,address)
-                
+            self.dataTratamentType4(message,address)
+        elif message["type"] == 5:
+            self.dataTratamentType5(message)   
 
 
     def bootstrapperWork(self):

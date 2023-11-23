@@ -56,13 +56,13 @@ class Server:
         return RTSPPacket.from_request(self._rtsp_recv())
 
     def _wait_connection(self):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        address = self.DEFAULT_HOST, self.rtsp_port
-        s.bind(address)
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Criação do Socket
+        address = self.DEFAULT_HOST, self.rtsp_port  # Isto é o address do Content Server 
+        s.bind(address) # Bind do Socket
         print(f"Listening on {address[0]}:{address[1]}...")
         s.listen(1)
         print("Waiting for connection...")
-        self._rtsp_connection, self._client_address = s.accept()
+        self._rtsp_connection, self._client_address = s.accept() # Receção de pedidos de clientes 
         self._rtsp_connection.settimeout(self.RTSP_SOFT_TIMEOUT/1000.)
         print(f"Accepted connection from {self._client_address[0]}:{self._client_address[1]}")
 

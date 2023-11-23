@@ -3,11 +3,11 @@ from contentServer import contentServer
 
 if __name__ == "__main__":
     try:
-        ip_Server = sys.argv[1]
-        port_Server = sys.argv[2]
-        fileMetadados = sys.argv[3]
-        ipBootStrapper = sys.argv[4]
-        portBootStrapper = sys.argv[5]
+        ip_Server = sys.argv[1]        # Ip do servidor de conteúdo
+        port_Server = sys.argv[2]      # Porta do servidor de conteúdo
+        fileMetadados = sys.argv[3]    # Ficheiro de metadados do servidor de conteúdo
+        ipBootStrapper = sys.argv[4]   # Ip do RP
+        portBootStrapper = sys.argv[5] # Porta do RP
        
     except:
         print("ERRO: Não foi inserido o ficheiro de metadados dos vídeos ... ")

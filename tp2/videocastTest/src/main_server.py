@@ -11,7 +11,7 @@ if __name__ == '__main__':
 
     try:
         port = 5543 #int(sys.argv[1])
-        #ip = sys.argv[2]
+        ip = sys.argv[2]
     except ValueError:
         raise ValueError('port value should be integer')
 
