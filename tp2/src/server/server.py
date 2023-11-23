@@ -70,6 +70,7 @@ class server:
                     message=pickle.dumps({"type":3,"subtype":"answer","id":ip_dest,"data":"A stream pedida irá ser transmitida ..."})
                     self.socket.sendto(message,cl)
                 self.clients = []
+
     def dataTratament(self,message,address):
         """ Função de tratamento dos dados recebidos no socket UDP """
         message = pickle.loads(message)
@@ -102,3 +103,5 @@ class server:
         
         self.socket.close()
     
+
+

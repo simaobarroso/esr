@@ -9,11 +9,8 @@ if __name__ == '__main__':
     ip = str(s.getsockname()[0])
     s.close()
 
-    #if len(sys.argv) != 3:
-    #    print(f"Usage: {sys.argv[0].split('/')[-1]} <port>")
-    #    exit(-1)
     try:
-        port = 5540 #int(sys.argv[1])
+        port = 5543 #int(sys.argv[1])
         #ip = sys.argv[2]
     except ValueError:
         raise ValueError('port value should be integer')

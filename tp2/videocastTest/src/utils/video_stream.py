@@ -17,17 +17,26 @@ class VideoStream:
 
     def close(self):
         self._stream.close()
-
+    
     def get_next_frame(self) -> bytes:
-        # sample video file format is as follows:
-        # - 5 digit integer `frame_length` written as 5 bytes, one for each digit (ascii)
-        # - `frame_length` bytes follow, which represent the frame encoded as a JPEG
-        # - repeat until EOF
         try:
             frame_length = self._stream.read(self.FRAME_HEADER_LENGTH)
-        except ValueError:
+            if not frame_length:
+                # Reset the stream to the beginning when reaching the end
+                self._stream.seek(0)
+                frame_length = self._stream.read(self.FRAME_HEADER_LENGTH)
+                if not frame_length:
+                    raise EOFError
+        except EOFError:
             raise EOFError
+
         frame_length = int(frame_length.decode())
         frame = self._stream.read(frame_length)
-        self.current_frame_number += 1
+
+        if self.current_frame_number == self.VIDEO_LENGTH - 1:
+            self.current_frame_number = 0
+            print(self.current_frame_number)
+        else:
+            self.current_frame_number += 1
+
         return bytes(frame)

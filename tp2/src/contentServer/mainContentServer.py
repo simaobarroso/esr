@@ -8,6 +8,7 @@ if __name__ == "__main__":
         fileMetadados = sys.argv[3]
         ipBootStrapper = sys.argv[4]
         portBootStrapper = sys.argv[5]
+       
     except:
         print("ERRO: Não foi inserido o ficheiro de metadados dos vídeos ... ")
     

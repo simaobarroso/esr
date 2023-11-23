@@ -149,8 +149,12 @@ class Server:
                 continue
             if self._video_stream.current_frame_number >= VideoStream.VIDEO_LENGTH-1:  # frames are 0-indexed
                 print('Reached end of file.')
-                self.server_state = self.STATE.FINISHED
-                return
+                #self.server_state = self.STATE.FINISHED
+                print(self._video_stream.current_frame_number)
+                #self._video_stream.current_frame_number = bytes(0)
+                
+                #continue
+                #return
             frame = self._video_stream.get_next_frame()
             frame_number = self._video_stream.current_frame_number
             rtp_packet = RTPPacket(

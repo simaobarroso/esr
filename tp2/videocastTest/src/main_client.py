@@ -20,7 +20,7 @@ if __name__ == '__main__':
     file_name, host_address = *sys.argv[1:],
 
     try:
-        host_port = 5540 #int(host_port)
+        host_port = 5543 #int(host_port)
         rtp_port = 5541 #int(rtp_port)
     except ValueError:
         raise ValueError('port values should be integer')
