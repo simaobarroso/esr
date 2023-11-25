@@ -1,6 +1,6 @@
 import sys
 from contentServer import contentServer
-
+import threading
 if __name__ == "__main__":
     try:
         ip_Server = sys.argv[1]        # Ip do servidor de conteúdo
@@ -17,4 +17,9 @@ if __name__ == "__main__":
     content_server = contentServer(fileMetadados,ip_Server,port_Server,ipBootStrapper,int(portBootStrapper))
     content_server.metadataVideos()
     content_server.sendFirstMessage()
-    content_server.content_serverWork()
+    t1 = threading.Thread(target=content_server.content_serverWork_UDP,name='t1')
+    t2 = threading.Thread(target=content_server.content_serverWork_TCP,name='t2')
+    t1.start()
+    t2.start()
+    t1.join()
+    t2.join()

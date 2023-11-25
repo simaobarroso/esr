@@ -6,6 +6,7 @@ import socket
 import threading
 import json 
 import pickle
+import sys
 class bootstrapper:
     def __init__(self,ip,port,fileNetwork):
         self.ip = ip # IP do servidor bootstrapper
@@ -31,7 +32,7 @@ class bootstrapper:
     def dataTratamentType2(self,message,address):
         """ Função de tratamento de dados para mensagens com o type == 2 """
         self.movies.append(message["data"]["nameMovie"])
-        self.ipContentServer = address
+        self.contentServer = address[0]
 
     def dataTratamentType4(self,message,address):
         """ Função de tratamento de dados para mensagens com o type == 4 """
@@ -44,13 +45,21 @@ class bootstrapper:
                         self.lock.release()
                     answer=pickle.dumps({"type":4,"subtype":"answer","id":message["id"],"data":"I'm the RP ..."})
                     self.socket.sendto(answer,address)
+                    # Conexão entre RP e o contentServer para pedir uma stream de vídeo ... 
+                    self.cs_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+                    self.cs_socket.connect((self.contentServer,int(5543)))
                     request = pickle.dumps({"type":5,"subtype":"request","data":message["nameVideo"]})
-                    self.socket.sendto(request,self.ipContentServer)
+                    print(sys.getsizeof({"type":5,"subtype":"request","data":message["nameVideo"]}))
+                    self.cs_socket.send(request)
+                    self.dataTratamentType5()
 
-    def dataTratamentType5(self,message):
+    def dataTratamentType5(self):
         """ Função de tratamento de dados para mensagens com o type == 5 """
+        message = self.cs_socket.recv(1024)
+        message = pickle.loads(message)
         if message["subtype"] == 'answer':  # Resposta ás mensagens de flood recebidas pelo RP 
             print(message)
+
     def bootstrapperDataTratament(self,message,address):
         """ Função de tratamento dos dados recebidos no socket UDP """
         print("O cliente com este endereço: %s submetou pedidos " % str(address))
@@ -63,9 +72,7 @@ class bootstrapper:
         elif message["type"] == 2:  # Receção do ficheiro de metadados proveniente do servidor de conteúdos
             self.dataTratamentType2(message,address)
         elif message["type"] == 4:
-            self.dataTratamentType4(message,address)
-        elif message["type"] == 5:
-            self.dataTratamentType5(message)   
+            self.dataTratamentType4(message,address)  
 
 
     def bootstrapperWork(self):
