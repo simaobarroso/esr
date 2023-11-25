@@ -6,7 +6,7 @@ import socket
 import threading
 import json 
 import pickle
-import sys
+
 class bootstrapper:
     def __init__(self,ip,port,fileNetwork):
         self.ip = ip # IP do servidor bootstrapper
@@ -49,7 +49,6 @@ class bootstrapper:
                     self.cs_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
                     self.cs_socket.connect((self.contentServer,int(5543)))
                     request = pickle.dumps({"type":5,"subtype":"request","data":message["nameVideo"]})
-                    print(sys.getsizeof({"type":5,"subtype":"request","data":message["nameVideo"]}))
                     self.cs_socket.send(request)
                     self.dataTratamentType5()
 
