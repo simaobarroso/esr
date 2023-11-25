@@ -132,7 +132,7 @@ class contentServer:
                 return
             # trim bytes sent
             to_send = to_send[self.DEFAULT_CHUNK_SIZE:]
-            
+
     def _rtsp_send(self, data: bytes) -> int:
         print(f"Sending to client: {repr(data)}")
         return self._rtsp_connection.send(data)
@@ -142,41 +142,20 @@ class contentServer:
         self._rtsp_send(response.encode())
         print('Sent response to client.')
 
-    def setupVideo(self):
+    def setupVideo(self,address_rp):
         """ Envio dos pacotes com a streaming de vídeo """
-        while True:
-            packet = self._get_rtsp_packet()
-            self._client_address = self._client_address[0], packet.rtp_dst_port
-            self._setup_rtp(packet.video_file_path)
-            self._send_rtsp_response(packet.sequence_number)
-            break
-    def dataTratamentType5(self,message):
-        """ Função de tratamento de dados para mensagens com o type == 5 """
         if self.numberAnswer < 1:
-            if message["subtype"] == 'request' : # Pedido de uma stream de vídeo por parte de um RP ao contentServer 
-                if message["data"] == self.metadata["nameMovie"]:
-                    answer = pickle.dumps({"type":5,"subtype":"answer","data":"Frames do vídeo irão ser enviados ..."})
-                    self._rtsp_connection.send(answer)
-                    self.numberAnswer = self.numberAnswer + 1
-                    self.setupVideo()
-                else:
-                    answer = pickle.dumps({"type":5,"subtype":"answer","data":"Não possuo esse vídeo ..."})
-                    self._rtsp_connection.send(answer)
-                    self.numberAnswer = self.numberAnswer + 1
-
+            while True:
+                packet = self._get_rtsp_packet()
+                self._client_address = (address_rp[0], packet.rtp_dst_port)
+                self._setup_rtp(packet.video_file_path)
+                self._send_rtsp_response(packet.sequence_number)
+                self.numberAnswer = self.numberAnswer + 1
+                break
+    
     def content_serverDataTratament(self,message,address):
         """ Função de tratamento de dados recebidos pelo servidor de bootstrapper """
-        message = pickle.loads(message)
-        if message["type"] == 5:
-            self.dataTratamentType5(message,address)
     
-    def videoStreaming(self):
-        """ Função de tratamento de pedidos de streaming recebidos pelo servidor de bootstrapper """
-        message = self._rtsp_connection.recv(232)
-        message = pickle.loads(message)
-        if message["type"] == 5:
-            self.dataTratamentType5(message)
-
     def content_serverWork_UDP(self):
         """ Trabalho realizado pelo servidor de conteúdo para responder aos pedidos de transmissão feitos pelo servidor bootstrapper """
         while True:
@@ -185,8 +164,7 @@ class contentServer:
             t1.start()
     def content_serverWork_TCP(self):
         """ Trabalho realizado pelo servidor de conteúdo para responder aos pedidos de transmissão feitos pelo servidor bootstrapper """
-        while True:
-            self._rtsp_connection,address_rp = self.RP_socket.accept()
-            self._rtsp_connection.settimeout(self.RTSP_SOFT_TIMEOUT/1000.)
-            t1 = threading.Thread(target=self.videoStreaming,name='t1') # Criação de threads para responder aos pedidos do bootstrapper
-            t1.start()
+        self._rtsp_connection,address_rp = self.RP_socket.accept()  
+        self._rtsp_connection.settimeout(self.RTSP_SOFT_TIMEOUT/1000.)
+        t1 = threading.Thread(target=self.setupVideo,args=(address_rp,),name='t1') # Criação de threads para responder aos pedidos do bootstrapper
+        t1.start()
