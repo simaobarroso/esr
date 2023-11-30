@@ -98,6 +98,7 @@ class contentServer:
 
     def _handle_video_send(self):
         print(f"Sending video to {self._client_address[0]}:{self._client_address[1]}")
+        self.server_state = self.STATE.PLAYING
         while True:
             if self.server_state == self.STATE.TEARDOWN:
                 return
