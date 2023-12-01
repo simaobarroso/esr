@@ -14,9 +14,6 @@ class serverForStream:
     PAUSE = 'pause' 
     TEARDOWN = 'teardown' 
 
-    # RTP Port
-    RTP_port = 5543
-
     # Streaming states
     INIT = 0 
     READY = 1 

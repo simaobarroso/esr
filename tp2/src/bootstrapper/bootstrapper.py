@@ -6,9 +6,21 @@ import socket
 import threading
 import json 
 import pickle
-
+from RtspPacket.RtspPacket import *
 
 class bootstrapper:
+
+    # Estado de streaming de video entre o RP e o content Server
+    INIT = 0 
+    READY = 1 
+    PLAYING = 2
+    state = INIT 
+
+    # Tipos de mensagens RTSP 
+    SETUP = 'SETUP'
+    PLAY = 'PLAY'
+    TEARDOWN = 'TEARDOWN'
+
     
     def __init__(self,ip,port,fileNetwork):
         self.ip = ip # IP do servidor bootstrapper
@@ -19,6 +31,7 @@ class bootstrapper:
         self.lock = threading.Lock()
         self.trees = {}
         self.movies = []
+        self.rtspSeq = 0
     
     def connectToNetwork(self):
         """ Criação do socket UDP a partir do qual o servidor bootstrapper irá receber pedidos dos clientes """
@@ -48,14 +61,11 @@ class bootstrapper:
                     answer=pickle.dumps({"type":4,"subtype":"answer","id":message["id"],"data":"I'm the RP ..."})
                     self.socket.sendto(answer,address)
                     # Conexão entre RP e o contentServer para pedir uma stream de vídeo ... 
-                
+                    self.rtspSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+                    self.rtspSocket.bind(('',5543))
+                    self.setupMovie()
 
-    def dataTratamentType5(self):
-        """ Função de tratamento de dados para mensagens com o type == 5 """
-        message = self.cs_socket.recv(1024)
-        message = pickle.loads(message)
-        if message["subtype"] == 'answer':  # Resposta ás mensagens de flood recebidas pelo RP 
-            print(message)
+                    
 
     def bootstrapperDataTratament(self,message,address):
         """ Função de tratamento dos dados recebidos no socket UDP """
@@ -79,3 +89,41 @@ class bootstrapper:
             t1 = threading.Thread(target=self.bootstrapperDataTratament,args=(message,address),name='t1') # Criação de threads para responder aos pedidos dos clientes
             t1.start()
             t1.join()
+    
+    def sendRtspRequest(self,requestCode):
+        """ Send RTSP request to the server content """
+        if requestCode == self.SETUP and self.state == self.INIT:
+            print("Vamos dar SETUP do vídeo")
+            self.rtspSeq += 1
+            type_request = self.SETUP
+            self.requestSent = self.SETUP  
+        elif requestCode == self.PLAY and self.state == self.READY:
+            self.rtspSeq += 1
+            print("Vamos dar PLAY do vídeo")
+            type_request = self.PLAY
+            self.requestSent = self.PLAY
+
+        request = RtspPacket()
+        request = request.encode(type_request,{})
+        
+        self.rtspSocket.sendto(request,(self.contentServer,7777))
+
+    def setupMovie(self):
+        """Vamos dar SETUP do vídeo"""
+        if self.state == self.INIT:
+            self.sendRtspRequest(self.SETUP)
+            self.state = self.READY
+            self.openRtpPort()
+    
+    def openRtpPort(self):
+        """ Cria um socket RTP para receber o vídeo """
+        self.rtpSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+
+        self.rtpSocket.settimeout(0.5)
+
+        try:
+            self.rtpSocket.bind(('',5555))
+            print("Bind do socket RTP")
+        finally:
+            print("Erro no bind do socket ...")        
+
