@@ -7,21 +7,9 @@ import threading
 import json 
 import pickle
 
-from utils.rtsp_packet import RTSPPacket
-from utils.rtp_packet import RTPPacket
-from utils.video_stream import VideoStream
 
 class bootstrapper:
-    DEFAULT_CHUNK_SIZE = 4096
-    DEFAULT_RECV_DELAY = 20  # in milliseconds
-    RTP_SOFT_TIMEOUT = 5  # in milliseconds
-    # for allowing simulated non-blocking operations
-    # (useful for keyboard break)
-    RTSP_SOFT_TIMEOUT = 100  # in milliseconds
-    # if it's present at the end of chunk, client assumes
-    # it's the last chunk for current frame (end of frame)
-    PACKET_HEADER_LENGTH = 5
-
+    
     def __init__(self,ip,port,fileNetwork):
         self.ip = ip # IP do servidor bootstrapper
         self.port = int(port) # Porta do servidor bootstrapper 
@@ -60,44 +48,8 @@ class bootstrapper:
                     answer=pickle.dumps({"type":4,"subtype":"answer","id":message["id"],"data":"I'm the RP ..."})
                     self.socket.sendto(answer,address)
                     # Conexão entre RP e o contentServer para pedir uma stream de vídeo ... 
-                    """
-                    self.cs_socket = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-                    self.cs_socket.connect((self.contentServer,int(5543)))
-                    request = pickle.dumps({"type":5,"subtype":"request","data":message["nameVideo"]})
-                    self.cs_socket.send(request)
-                    self.dataTratamentType5()
-                    """
-                    self._rtsp_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    self._rtsp_connection.connect((self.contentServer, 5543))
-                    self._rtsp_connection.settimeout(self.RTSP_SOFT_TIMEOUT / 1000.)
-                    self.is_rtsp_connected = True
-                    request_type=RTSPPacket.SETUP
-                    self.file_path = message["nameVideo"]
-                    self._current_sequence_number = 0 
-                    self.session_id = ''
-                    request = RTSPPacket(
-                        request_type,
-                        self.file_path,
-                        self._current_sequence_number,
-                        5543,
-                        self.session_id
-                    ).to_request()
-                    print(f"Sending request: {repr(request)}")
-                    self._rtsp_connection.send(request)
-                    self._current_sequence_number += 1
-                    return self._get_response()
                 
-    def _get_response(self, size=DEFAULT_CHUNK_SIZE) -> RTSPPacket:
-        rcv = None
-        while True:
-            try:
-                rcv = self._rtsp_connection.recv(size)
-                break
-            except socket.timeout:
-                continue
-        print(f"Received from server: {repr(rcv)}")
-        response = RTSPPacket.from_response(rcv)
-        return response
+
     def dataTratamentType5(self):
         """ Função de tratamento de dados para mensagens com o type == 5 """
         message = self.cs_socket.recv(1024)
@@ -127,5 +79,3 @@ class bootstrapper:
             t1 = threading.Thread(target=self.bootstrapperDataTratament,args=(message,address),name='t1') # Criação de threads para responder aos pedidos dos clientes
             t1.start()
             t1.join()
-        
-        self.socket.close()
