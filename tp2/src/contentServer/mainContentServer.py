@@ -15,11 +15,6 @@ if __name__ == "__main__":
     # Criação do servidores de conteúdo 
     print("Servidor á escuta na porta "+ str(port_Server)+" com o IP "+str(ip_Server))
     content_server = contentServer(fileMetadados,ip_Server,port_Server,ipBootStrapper,int(portBootStrapper))
-    content_server.metadataVideos()
-    content_server.sendFirstMessage()
-    t1 = threading.Thread(target=content_server.content_serverWork_UDP,name='t1')
-    t2 = threading.Thread(target=content_server.content_serverWork_TCP,name='t2')
-    t1.start()
-    t2.start()
-    t1.join()
-    t2.join()
+    content_server.run()
+    
+    
