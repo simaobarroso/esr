@@ -6,8 +6,8 @@ import socket
 import threading
 import json 
 import pickle
-from RtspPacket.RtspPacket import *
-
+from RtspPacket import *
+from RtpPacket import *
 class bootstrapper:
 
     # Estado de streaming de video entre o RP e o content Server
@@ -32,6 +32,7 @@ class bootstrapper:
         self.trees = {}
         self.movies = []
         self.rtspSeq = 0
+        self.frameNbr = 0 
     
     def connectToNetwork(self):
         """ Criação do socket UDP a partir do qual o servidor bootstrapper irá receber pedidos dos clientes """
@@ -64,6 +65,7 @@ class bootstrapper:
                     self.rtspSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
                     self.rtspSocket.bind(('',5543))
                     self.setupMovie()
+                    self.playMovie()
 
                     
 
@@ -125,5 +127,33 @@ class bootstrapper:
             self.rtpSocket.bind(('',5555))
             print("Bind do socket RTP")
         finally:
-            print("Erro no bind do socket ...")        
+            print("Erro no bind do socket ...")
+
+    def listenRtp(self):
+        """ Leitura dos pacotes RTP """
+        while True:
+            try:
+                data = self.rtpSocket.recv()
+                if data:
+                    RtpPacket = RtspPacket()
+                    RtpPacket.decode(data)
+
+                    currentNumberFrame = RtpPacket.seqNum()
+                    print("Este é o current Number Frame:" + str(currentNumberFrame))
+
+                    if currentNumberFrame > self.frameNbr:
+                        self.frameNbr = currentNumberFrame
+                        # Temos de ver o que fazer 
+            except:
+                # Este caso aqui é só para o PAUSE ou TEARDOWN 
+                print("ERRO")
+    
+    def playMovie(self):
+        """ O RP pede o vídeo ao Contente Server """
+        if self.state == self.READY:
+            threading.Thread(target=self.listenRtp).start()
+            self.playEvent = threading.Event()
+            self.playEvent.clear()
+            self.sendRtspRequest(self.PLAY)
+            self.state = self.PLAYING
 

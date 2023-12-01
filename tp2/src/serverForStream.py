@@ -1,6 +1,6 @@
 """ Esta classe é responsável por albergar tudo o que seja relacionado com a transmissão do vídeo que se encontra no Content Server para o bootstrapper """
-from videoStream.videoStream import *
-from RtpPacket.RtpPacket import *
+from videoStream import videoStream
+from RtpPacket import RtpPacket
 from random import randint
 import threading
 import socket
@@ -61,7 +61,7 @@ class serverForStream:
         """ Tratamento dos pedidos de controlo de RTP , isto é RTSP """
         streamingSocket = self.infoClient["socketStream"]
         while True:
-            dados = streamingSocket.recvfrom()
+            dados = streamingSocket.recvfrom(1024)
             if dados:
                 print("Data received:\n" + dados.decode("utf-8"))
                 self.processRtspRequest(dados.decode("utf-8"))
@@ -86,7 +86,7 @@ class serverForStream:
                 print("processing SETUP\n")
 				
                 try:
-                    self.infoClient['videoStream'] = videoStream(filename)
+                    self.infoClient['streaming'] = videoStream(filename)
                     self.state = self.READY
                 except IOError:
                     self.replyRtsp(self.FILE_NOT_FOUND_404, seq[1])
@@ -146,9 +146,9 @@ class serverForStream:
             if self.infoClient['event'].isSet(): 
                 break 
 
-            data = self.infoClient['videoStream'].nextFrame()
+            data = self.infoClient['streaming'].nextFrame()
             if data: 
-                frameNumber = self.infoClient['videoStream'].frameNbr()
+                frameNumber = self.infoClient['streaming'].frameNbr()
                 try:
                     address = self.infoClient['rtspSocket'][1][0]
                     port = int(self.infoClient['rtpPort'])
@@ -159,7 +159,7 @@ class serverForStream:
                     #traceback.print_exc(file=sys.stdout)
                     #print('-'*60)
             else:
-                self.infoClient['videoStream'].reopen_stream() # Envio em loop
+                self.infoClient['streaming'].reopen_stream() # Envio em loop
     
     def replyRtsp(self, code, seq):
         """Send RTSP reply to the client."""

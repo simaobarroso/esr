@@ -11,7 +11,7 @@ class videoStream:
     
     def nextFrame(self):
         """ Função que nos dá a próxima frame do vídeo """
-        dados = self.file.read(5) # Comprimento das frames dos primeiros 5 bits 
+        dados = self.ficheiro.read(5) # Comprimento das frames dos primeiros 5 bits 
         if dados:
             framelength = int(dados)
 
