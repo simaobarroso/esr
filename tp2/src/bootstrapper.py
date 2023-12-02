@@ -56,7 +56,9 @@ class bootstrapper:
                 if message["nameVideo"] in self.movies:
                     self.lock.acquire()
                     try:
-                        self.trees[address] = message["nameVideo"]
+                        if message["nameVideo"] not in self.trees:
+                            self.trees[message["nameVideo"]] = []
+                        self.trees[message["nameVideo"]].append(address)
                     finally:
                         self.lock.release()
                     answer=pickle.dumps({"type":4,"subtype":"answer","id":message["id"],"data":"I'm the RP ..."})
@@ -132,22 +134,29 @@ class bootstrapper:
     def listenRtp(self):
         """ Leitura dos pacotes RTP """
         while True:
-            #try:
+            try:
                 data = self.rtpSocket.recv(1024)
                 if data:
                     rtpPacket = RtpPacket()
                     rtpPacket.decode(data)
 
                     currentNumberFrame = rtpPacket.seqNum()
-                    print("Este é o current Number Frame:" + str(currentNumberFrame))
-
+                    # print("Este é o current Number Frame:" + str(currentNumberFrame))
+                    th = threading.Thread(target= self.sendRtpForServers, args=(rtpPacket,)).start()
+                    # th.join()
+                    # Agora é transmitir para os vizinhos 
                     if currentNumberFrame > self.frameNbr:
                         self.frameNbr = currentNumberFrame
                         # Temos de ver o que fazer 
-            #except:
-                # Este caso aqui é só para o PAUSE ou TEARDOWN 
+            except: # Para o vídeo quando está em PAUSE ou em TEARDOWN 
+                if self.playEvent.isSet():
+                    break
+
+                if self.teardownAcked == 1:
+                    self.rtpSocket.shutdown(socket.SHUT_RDWR)
+                    self.rtpSocket.close()
+                    break
                 
-    
     def playMovie(self):
         """ O RP pede o vídeo ao Contente Server """
         if self.state == self.READY:
@@ -156,4 +165,19 @@ class bootstrapper:
             self.playEvent.clear()
             self.sendRtspRequest(self.PLAY)
             self.state = self.PLAYING
+
+    def sendRtpForServers(self,rtpPacket):
+        self.lock.acquire()
+        try:
+            lista = self.trees[rtpPacket.nameVideo()]
+        finally:
+            self.lock.release()
+        nameVideo = str(rtpPacket.nameVideo())
+        data = rtpPacket.getPayload()
+        frameNumber = int(rtpPacket.seqNum())
+        socketForServers = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+        for elem in lista:
+            print("Estou a retransmitir as streams para o endereço: "+ str(elem))
+            socketForServers.sendto(RtpPacket.makeNewRtp(nameVideo,data,frameNumber),elem)
+
 

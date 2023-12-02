@@ -25,7 +25,7 @@ class contentServer:
         """ Criação do socket UDP a partir do qual o servidor de conteúdo irá receber pedidos do bootstrapper e enviar os vídeos para serem transmitidos """
         self.socket = socket.socket (socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind((self.ip,self.port))
-        self.socketStream = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+        # self.socketStream = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
         
     def metadataVideos(self):
         """ Leitura dos metadados existentes no ficheiro self.fileVideos """

@@ -108,6 +108,7 @@ class serverForStream:
     
     def makeRtp(self,payload,numberFrame):
         """ Criação de um pacote RTP para a streaming de vídeo """
+        namevideo = self.infoClient['streaming'].filename
         version = 2
         padding = 0 
         extension = 0
@@ -118,5 +119,5 @@ class serverForStream:
         ssrc = 0
 
         rtp_packet = RtpPacket()
-        rtp_packet.encode(version,padding,extension,cc,seqnum,marker,pt,ssrc,payload)
+        rtp_packet.encode(namevideo,version,padding,extension,cc,seqnum,marker,pt,ssrc,payload)
         return rtp_packet.getPacket()
