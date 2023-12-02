@@ -70,7 +70,7 @@ class bootstrapper:
                     self.playMovie()
 
                     
-
+  
     def bootstrapperDataTratament(self,message,address):
         """ Função de tratamento dos dados recebidos no socket UDP """
         print("O cliente com este endereço: %s submetou pedidos " % str(address))
@@ -176,8 +176,9 @@ class bootstrapper:
         data = rtpPacket.getPayload()
         frameNumber = int(rtpPacket.seqNum())
         socketForServers = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-        for elem in lista:
-            print("Estou a retransmitir as streams para o endereço: "+ str(elem))
-            socketForServers.sendto(RtpPacket.makeNewRtp(nameVideo,data,frameNumber),elem)
+        for ip,port in lista:
+            
+            print("Estou a retransmitir as streams para o endereço: "+ str((ip,5543)))
+            socketForServers.sendto(RtpPacket.makeNewRtp(nameVideo,data,frameNumber),(ip,5543))
 
 

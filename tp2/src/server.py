@@ -4,6 +4,8 @@ Este servidor já é oNode uma vez que é basicamente cliente e servidor ao mesm
 import socket
 import threading
 import pickle
+from RtspPacket import RtspPacket
+from RtpPacket import RtpPacket
 
 class server:
     def __init__(self,ip,port,ipBootStrapper,portBootStrapper):
@@ -16,6 +18,7 @@ class server:
         self.connectToNetwork()
         self.messages={}
         self.clients=[]
+        self.lock = threading.Lock()
 
     def connectToNetwork(self):
         """ Criação do socket UDP a partir do qual o servidor irá receber pedidos dos clientes """
@@ -102,6 +105,62 @@ class server:
             t1.join()
         
         self.socket.close()
-    
 
+    def openRtpPort(self):
+        """ Cria um socket RTP para receber o vídeo """
+        self.rtpSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+
+        # self.rtpSocket.settimeout(0.5)
+
+        try:
+            self.rtpSocket.bind(('',5543))
+            print("Bind do socket RTP")
+        except:
+            print("Erro no bind do socket ...")
+
+    def listenRtp(self):
+        """ Leitura dos pacotes RTP """
+        while True:
+            try:
+                data = self.rtpSocket.recv(1024)
+                if data:
+                    rtpPacket = RtpPacket()
+                    rtpPacket.decode(data)
+                    print("recebi")
+                    currentNumberFrame = rtpPacket.seqNum()
+                    # print("Este é o current Number Frame:" + str(currentNumberFrame))
+                    th = threading.Thread(target= self.sendRtpForServers, args=(rtpPacket,)).start()
+                    # th.join()
+                    # Agora é transmitir para os vizinhos 
+                    if currentNumberFrame > self.frameNbr:
+                        self.frameNbr = currentNumberFrame
+                        # Temos de ver o que fazer 
+            except: # Para o vídeo quando está em PAUSE ou em TEARDOWN 
+                #if self.playEvent.isSet():
+                    #break
+
+                #if self.teardownAcked == 1:
+                    #self.rtpSocket.shutdown(socket.SHUT_RDWR)
+                    #self.rtpSocket.close()
+                break
+    
+    def sendRtpForServers(self,rtpPacket):
+        self.lock.acquire()
+        try:
+            lista = self.paths[rtpPacket.nameVideo()]
+        finally:
+            self.lock.release()
+        nameVideo = str(rtpPacket.nameVideo())
+        data = rtpPacket.getPayload()
+        frameNumber = int(rtpPacket.seqNum())
+        socketForServers = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+        for elem in lista:
+            print("Estou a retransmitir as streams para o endereço: "+ str(elem))
+            socketForServers.sendto(RtpPacket.makeNewRtp(nameVideo,data,frameNumber),elem)
+
+    
+    def run(self):
+        self.openRtpPort()
+        th = threading.Thread(target= self.serverWork).start()
+        th1 = threading.Thread(target= self.listenRtp).start()
 

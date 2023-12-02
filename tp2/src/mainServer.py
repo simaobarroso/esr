@@ -15,4 +15,6 @@ if __name__ == "__main__":
     sv = server(ip_Server,port_Server,ipBootStrapper,int(portBootStrapper))
     sv.sendFirstMessage(ipBootStrapper,int(portBootStrapper))
     sv.receiveFirstMessage()
-    sv.serverWork()
+    #sv.serverWork()
+    #sv.listenRtp()
+    sv.run()
