@@ -97,7 +97,7 @@ class clientGUI:
         while True:
             print("TESTE1")
             try:
-                data = self.rtpSocket.recv(1024)
+                data = self.rtpSocket.recv(20480)
                 if data:
                     rtpPacket = RtpPacket()
                     rtpPacket.decode(data)
@@ -105,9 +105,10 @@ class clientGUI:
                     print("Estou a receber streams de vídeo dos meus vizinhos")
                     print("Este é o current Number Frame:" + str(currentNumberFrame))
 
-                    #if currentNumberFrame > self.frameNbr:
-                    #    self.frameNbr = currentNumberFrame
-                    #    self.updateMovie(self.writeFrame(rtpPacket.getPayload()))
+                    if currentNumberFrame > self.frameNbr:
+                        self.frameNbr = currentNumberFrame
+                        cachename = self.writeFrame(rtpPacket.getPayload())
+                        self.updateMovie(cachename)
             except: # Para o vídeo quando está em PAUSE ou em TEARDOWN 
                 if self.playEvent.isSet():
                     print("TESTE2")
@@ -125,13 +126,14 @@ class clientGUI:
         file = open(cachename, "wb")
         file.write(data)
         file.close()
+
         return cachename
 
     def updateMovie(self,imageFile):
         print("TESTE4")
         photo = ImageTk.PhotoImage(Image.open(imageFile))
         print("TESTE6")
-        self.label.configure(image = photo, heigth=288)
+        self.label.configure(image = photo, height=288)
         print("TESTE7")
         self.label.image = photo
     
