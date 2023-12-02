@@ -98,7 +98,7 @@ class serverForStream:
                     if self.state == self.PLAYING:
                         print("A enviar os pacotes do vídeo para o RP")
                         print("Estou a enviar este frameNumber:"+str(frameNumber))
-                        # print("Estes são os dados:" + str(data))
+                        #print("Estes são os dados:" + str(data))
                         self.infoClient['rtpSocket'].sendto(self.makeRtp(data,frameNumber) ,self.client)
                 except:
                     print("Connection Error")

@@ -136,7 +136,7 @@ class server:
         """ Leitura dos pacotes RTP """
         while True:
             try:
-                data = self.rtpSocket.recv(1024)
+                data = self.rtpSocket.recv(20480000)
                 if data:
                     rtpPacket = RtpPacket()
                     rtpPacket.decode(data)

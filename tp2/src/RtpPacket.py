@@ -84,6 +84,7 @@ class RtpPacket:
 		print("[RTP Packet] Sequence Number:", self.seqNum())
 		print("[RTP Packet] Timestamp:", self.timestamp())
 		print("[RTP Packet] Payload Type:", self.payloadType())
+		print("[RTP Packet] Payload: ", self.getPayload())
 
 	def makeNewRtp(name,data,frameNumber):
 

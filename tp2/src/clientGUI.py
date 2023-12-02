@@ -95,9 +95,8 @@ class clientGUI:
     def listenRtp(self):
         """ Listen for RTP packets """
         while True:
-            print("TESTE1")
             try:
-                data = self.rtpSocket.recv(20480)
+                data = self.rtpSocket.recv(20480000)
                 if data:
                     rtpPacket = RtpPacket()
                     rtpPacket.decode(data)
@@ -107,21 +106,20 @@ class clientGUI:
 
                     if currentNumberFrame > self.frameNbr:
                         self.frameNbr = currentNumberFrame
-                        cachename = self.writeFrame(rtpPacket.getPayload())
-                        self.updateMovie(cachename)
+                    cachename = self.writeFrame(rtpPacket.getPayload())
+                    self.updateMovie(cachename)
             except: # Para o vídeo quando está em PAUSE ou em TEARDOWN 
                 if self.playEvent.isSet():
-                    print("TESTE2")
+                    
                     break
 
                 if self.teardownAcked == 1:
-                    print("TESTE3")
+                    
                     self.rtpSocket.shutdown(socket.SHUT_RDWR)
                     self.rtpSocket.close()
                 break
     
     def writeFrame(self,data):
-        print("TESTE5")
         cachename = CACHE_FILE_NAME + CACHE_FILE_EXT
         file = open(cachename, "wb")
         file.write(data)
@@ -130,11 +128,11 @@ class clientGUI:
         return cachename
 
     def updateMovie(self,imageFile):
-        print("TESTE4")
+       
         photo = ImageTk.PhotoImage(Image.open(imageFile))
-        print("TESTE6")
+        
         self.label.configure(image = photo, height=288)
-        print("TESTE7")
+        
         self.label.image = photo
     
     def sendRtspRequest(self,requestCode):

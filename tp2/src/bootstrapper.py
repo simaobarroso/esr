@@ -134,11 +134,11 @@ class bootstrapper:
     def listenRtp(self):
         """ Leitura dos pacotes RTP """
         while True:
-                data = self.rtpSocket.recv(1024)
+                data = self.rtpSocket.recv(20480000)
                 if data:
                     rtpPacket = RtpPacket()
                     rtpPacket.decode(data)
-                    rtpPacket.printheader()
+                    
 
                     currentNumberFrame = rtpPacket.seqNum()
                     # print("Este é o current Number Frame:" + str(currentNumberFrame))
