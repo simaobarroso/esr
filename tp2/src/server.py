@@ -144,6 +144,7 @@ class server:
                     print("Estou a receber streams de vídeo dos meus vizinhos")
                     print("Este é o current Number Frame:" + str(currentNumberFrame))
                     th = threading.Thread(target= self.sendRtpForServers, args=(rtpPacket,)).start()
+                    th1 = threading.Thread(target= self.sendRtpForClients, args=(rtpPacket,)).start()
                     # th.join()
             except: # Para o vídeo quando está em PAUSE ou em TEARDOWN 
                 #if self.playEvent.isSet():
@@ -168,6 +169,19 @@ class server:
             print("Estou a retransmitir as streams para o endereço: "+ str(elem[0]) + " na porta 5543")
             socketForServers.sendto(RtpPacket.makeNewRtp(nameVideo,data,frameNumber),(elem[0],5543))
 
+    def sendRtpForClients(self,rtpPacket):
+        self.lock.acquire()
+        try:
+            lista = self.clients
+        finally:
+            self.lock.release()
+        nameVideo = str(rtpPacket.nameVideo())
+        data = rtpPacket.getPayload()
+        frameNumber = int(rtpPacket.seqNum())
+        socketForClient = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+        for elem in lista:
+            print("Estou a retransmitir as streams para o endereço: "+ str(elem[0]) + " na porta 5543")
+            socketForClient.sendto(RtpPacket.makeNewRtp(nameVideo,data,frameNumber),(elem[0],5543))
     
     def run(self):
         self.openRtpPort()

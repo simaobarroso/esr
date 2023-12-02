@@ -12,7 +12,7 @@ class client:
         """ Criação do socket UDP para a ligação entre cliente e servidor """
         self.socket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
         self.socketStream = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-        self.socketStream.bind(('',5543))
+        self.socketStream.bind(('',5555))
 
     def sendMessage(self):
         """ Envio de uma mensagem do cliente para o servidor vizinho """
@@ -50,7 +50,7 @@ class client:
     def client_run(self):
         """ Interface gráfica co cliente """
         root = Tk()
-        app = clientGUI(root,self.neighbors_IP_Port,self.socketStream)
+        app = clientGUI(root,self.ip,self.socketStream)
         app.master.title(" Streaming de vídeo ")
         root.mainloop()
 
