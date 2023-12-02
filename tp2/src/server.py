@@ -180,7 +180,7 @@ class server:
         frameNumber = int(rtpPacket.seqNum())
         socketForClient = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
         for elem in lista:
-            print("Estou a retransmitir as streams para o endereço: "+ str(elem[0]) + " na porta 5543")
+            print("Estou a retransmitir as streams para os clientes endereço: "+ str(elem[0]) + " na porta 5543")
             socketForClient.sendto(RtpPacket.makeNewRtp(nameVideo,data,frameNumber),(elem[0],5543))
     
     def run(self):

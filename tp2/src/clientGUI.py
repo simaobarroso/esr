@@ -2,7 +2,7 @@ from tkinter import *
 import threading
 from RtpPacket import RtpPacket
 import socket
-from PIL import Image
+from PIL import Image,ImageTk
 from RtspPacket import RtspPacket
 import tkinter.messagebox
 
@@ -105,19 +105,22 @@ class clientGUI:
                     print("Estou a receber streams de vídeo dos meus vizinhos")
                     print("Este é o current Number Frame:" + str(currentNumberFrame))
 
-                    if currentNumberFrame > self.frameNbr:
-                        self.frameNbr = currentNumberFrame
-                        self.updateMovie(self.writeFrame(rtpPacket.getPayload()))
+                    #if currentNumberFrame > self.frameNbr:
+                    #    self.frameNbr = currentNumberFrame
+                    #    self.updateMovie(self.writeFrame(rtpPacket.getPayload()))
             except: # Para o vídeo quando está em PAUSE ou em TEARDOWN 
                 if self.playEvent.isSet():
+                    print("TESTE2")
                     break
 
                 if self.teardownAcked == 1:
+                    print("TESTE3")
                     self.rtpSocket.shutdown(socket.SHUT_RDWR)
                     self.rtpSocket.close()
                 break
     
     def writeFrame(self,data):
+        print("TESTE5")
         cachename = CACHE_FILE_NAME + CACHE_FILE_EXT
         file = open(cachename, "wb")
         file.write(data)
@@ -125,8 +128,11 @@ class clientGUI:
         return cachename
 
     def updateMovie(self,imageFile):
+        print("TESTE4")
         photo = ImageTk.PhotoImage(Image.open(imageFile))
+        print("TESTE6")
         self.label.configure(image = photo, heigth=288)
+        print("TESTE7")
         self.label.image = photo
     
     def sendRtspRequest(self,requestCode):
