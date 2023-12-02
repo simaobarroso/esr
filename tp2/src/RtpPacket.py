@@ -38,9 +38,10 @@ class RtpPacket:
 	def decode(self, byteStream):
 		"""Decode the RTP packet."""
 		self.filenameSize = int.from_bytes(byteStream[:4], byteorder='big')
-		self.filename = byteStream[4:self.filenameSize + 4].decode("utf-8")
-		self.header = bytearray(byteStream[:HEADER_SIZE])
-		self.payload = byteStream[HEADER_SIZE:]
+		header_idx =self.filenameSize + 4
+		self.filename = byteStream[4:header_idx].decode("utf-8")
+		self.header = bytearray(byteStream[header_idx:HEADER_SIZE+header_idx])
+		self.payload = byteStream[HEADER_SIZE+header_idx:]
 	
 	def version(self):
 		"""Return RTP version."""

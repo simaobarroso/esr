@@ -123,7 +123,7 @@ class bootstrapper:
         """ Cria um socket RTP para receber o vídeo """
         self.rtpSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
 
-        # self.rtpSocket.settimeout(0.5)
+        self.rtpSocket.settimeout(0.5)
 
         try:
             self.rtpSocket.bind(('',5555))
@@ -134,11 +134,11 @@ class bootstrapper:
     def listenRtp(self):
         """ Leitura dos pacotes RTP """
         while True:
-            try:
                 data = self.rtpSocket.recv(1024)
                 if data:
                     rtpPacket = RtpPacket()
                     rtpPacket.decode(data)
+                    rtpPacket.printheader()
 
                     currentNumberFrame = rtpPacket.seqNum()
                     # print("Este é o current Number Frame:" + str(currentNumberFrame))
@@ -148,15 +148,6 @@ class bootstrapper:
                     if currentNumberFrame > self.frameNbr:
                         self.frameNbr = currentNumberFrame
                         # Temos de ver o que fazer 
-            except: # Para o vídeo quando está em PAUSE ou em TEARDOWN 
-                if self.playEvent.isSet():
-                    break
-
-                if self.teardownAcked == 1:
-                    self.rtpSocket.shutdown(socket.SHUT_RDWR)
-                    self.rtpSocket.close()
-                    break
-                
     def playMovie(self):
         """ O RP pede o vídeo ao Contente Server """
         if self.state == self.READY:
@@ -175,6 +166,7 @@ class bootstrapper:
         nameVideo = str(rtpPacket.nameVideo())
         data = rtpPacket.getPayload()
         frameNumber = int(rtpPacket.seqNum())
+        print("Estou a mandar este frame number:"+ str(frameNumber))
         socketForServers = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
         for ip,port in lista:
             

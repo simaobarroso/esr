@@ -35,6 +35,13 @@ class server:
                     print("Flood da rede propagado para os vizinhos ...")
                     self.messages[message["id"]]=address
                     id_message=message["id"]
+                    self.lock.acquire()
+                    try:
+                        if message["nameVideo"] not in self.paths:
+                            self.paths[message["nameVideo"]] = []
+                        self.paths[message["nameVideo"]].append(address)
+                    finally:
+                        self.lock.release()
                     message=pickle.dumps({"type":4,"subtype":"request","id":id_message,"nameVideo":message["nameVideo"]})
                     for a in self.neighbors:
                         ip_Porta = a.split('-')
@@ -52,6 +59,13 @@ class server:
                     print("Flood da rede propagado para os vizinhos ...")
                     self.messages[message["id"]]=address
                     id_message=message["id"]
+                    self.lock.acquire()
+                    try:
+                        if message["nameVideo"] not in self.paths:
+                            self.paths[message["nameVideo"]] = []
+                        self.paths[message["nameVideo"]].append(address)
+                    finally:
+                        self.lock.release()
                     message=pickle.dumps({"type":4,"subtype":"request","id":id_message,"nameVideo":message["nameVideo"]})
                     for a in self.neighbors:
                         ip_Porta = a.split('-')
@@ -126,15 +140,11 @@ class server:
                 if data:
                     rtpPacket = RtpPacket()
                     rtpPacket.decode(data)
-                    print("recebi")
                     currentNumberFrame = rtpPacket.seqNum()
-                    # print("Este é o current Number Frame:" + str(currentNumberFrame))
+                    print("Estou a receber streams de vídeo dos meus vizinhos")
+                    print("Este é o current Number Frame:" + str(currentNumberFrame))
                     th = threading.Thread(target= self.sendRtpForServers, args=(rtpPacket,)).start()
                     # th.join()
-                    # Agora é transmitir para os vizinhos 
-                    if currentNumberFrame > self.frameNbr:
-                        self.frameNbr = currentNumberFrame
-                        # Temos de ver o que fazer 
             except: # Para o vídeo quando está em PAUSE ou em TEARDOWN 
                 #if self.playEvent.isSet():
                     #break
@@ -155,8 +165,8 @@ class server:
         frameNumber = int(rtpPacket.seqNum())
         socketForServers = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
         for elem in lista:
-            print("Estou a retransmitir as streams para o endereço: "+ str(elem))
-            socketForServers.sendto(RtpPacket.makeNewRtp(nameVideo,data,frameNumber),elem)
+            print("Estou a retransmitir as streams para o endereço: "+ str(elem[0]) + " na porta 5543")
+            socketForServers.sendto(RtpPacket.makeNewRtp(nameVideo,data,frameNumber),(elem[0],5543))
 
     
     def run(self):

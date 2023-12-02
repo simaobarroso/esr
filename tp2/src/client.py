@@ -1,5 +1,7 @@
 import socket
 import pickle
+from tkinter import Tk
+from clientGUI import clientGUI
 class client:
     def __init__(self,ipHost):
         self.ipHost = ipHost # IP do próprio cliente
@@ -9,6 +11,8 @@ class client:
     def connectToNetwork(self):
         """ Criação do socket UDP para a ligação entre cliente e servidor """
         self.socket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+        self.socketStream = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+        self.socketStream.bind(('',5543))
 
     def sendMessage(self):
         """ Envio de uma mensagem do cliente para o servidor vizinho """
@@ -43,3 +47,14 @@ class client:
         message, address = self.socket.recvfrom(1024)
         self.dataTratamentType3(message,address)
     
+    def client_run(self):
+        """ Interface gráfica co cliente """
+        root = Tk()
+        app = clientGUI(root,self.neighbors_IP_Port,self.socketStream)
+        app.master.title(" Streaming de vídeo ")
+        root.mainloop()
+
+    def run(self):
+        """ Criação da interface gráfica do cliente """
+        self.client_run()
+

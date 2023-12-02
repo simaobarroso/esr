@@ -15,3 +15,4 @@ if __name__ == "__main__":
     cl.receiveFirstMessage()
     cl.sendMessage()
     cl.receiveMessage()
+    cl.run()

@@ -14,7 +14,6 @@ class videoStream:
         dados = self.ficheiro.read(5) # Comprimento das frames dos primeiros 5 bits 
         if dados:
             framelength = int(dados)
-
             # Leitura do frame atual 
             dados = self.ficheiro.read(framelength)
             self.frameNumber += 1
@@ -28,5 +27,6 @@ class videoStream:
         """ Reabre novamente o ficheiro de vídeo """
         try:
             self.ficheiro = open(self.filename, 'rb')
+            self.frameNumber = 0 
         except:
             raise IOError
