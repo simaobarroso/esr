@@ -6,8 +6,8 @@ import socket
 import threading
 import json 
 import pickle
-from RtspPacket import *
-from RtpPacket import *
+from RtspPacket import RtspPacket
+from RtpPacket import RtpPacket
 class bootstrapper:
 
     # Estado de streaming de video entre o RP e o content Server
@@ -121,32 +121,32 @@ class bootstrapper:
         """ Cria um socket RTP para receber o vídeo """
         self.rtpSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
 
-        self.rtpSocket.settimeout(0.5)
+        # self.rtpSocket.settimeout(0.5)
 
         try:
             self.rtpSocket.bind(('',5555))
             print("Bind do socket RTP")
-        finally:
+        except:
             print("Erro no bind do socket ...")
 
     def listenRtp(self):
         """ Leitura dos pacotes RTP """
         while True:
-            try:
-                data = self.rtpSocket.recv()
+            #try:
+                data = self.rtpSocket.recv(1024)
                 if data:
-                    RtpPacket = RtspPacket()
-                    RtpPacket.decode(data)
+                    rtpPacket = RtpPacket()
+                    rtpPacket.decode(data)
 
-                    currentNumberFrame = RtpPacket.seqNum()
+                    currentNumberFrame = rtpPacket.seqNum()
                     print("Este é o current Number Frame:" + str(currentNumberFrame))
 
                     if currentNumberFrame > self.frameNbr:
                         self.frameNbr = currentNumberFrame
                         # Temos de ver o que fazer 
-            except:
+            #except:
                 # Este caso aqui é só para o PAUSE ou TEARDOWN 
-                print("ERRO")
+                
     
     def playMovie(self):
         """ O RP pede o vídeo ao Contente Server """

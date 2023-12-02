@@ -14,7 +14,6 @@ class RtspPacket:
             data = data[:-1] + "."
         else:
             data += "."
-        data.ljust(250,"0")
         return data.encode("utf-8")
     
     def decode(self,bytes):
