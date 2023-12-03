@@ -8,6 +8,18 @@ from RtspPacket import RtspPacket
 from RtpPacket import RtpPacket
 
 class server:
+    # RTSP States 
+    SETUP = 'SETUP'
+    PLAY = 'PLAY'
+    PAUSE = 'PAUSE' 
+    TEARDOWN = 'TEARDOWN' 
+
+    # Streaming states
+    INIT = 0 
+    READY = 1 
+    PLAYING = 2
+    state = INIT 
+
     def __init__(self,ip,port,ipBootStrapper,portBootStrapper):
         self.ip = ip # IP do servidor que queremos criar 
         self.port = int(port) # Porta do servidor com a qual queremos estabelecer conexão
@@ -175,16 +187,63 @@ class server:
             lista = self.clients
         finally:
             self.lock.release()
-        nameVideo = str(rtpPacket.nameVideo())
-        data = rtpPacket.getPayload()
-        frameNumber = int(rtpPacket.seqNum())
-        socketForClient = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-        for elem in lista:
-            print("Estou a retransmitir as streams para os clientes endereço: "+ str(elem[0]) + " na porta 5543")
-            socketForClient.sendto(RtpPacket.makeNewRtp(nameVideo,data,frameNumber),(elem[0],5543))
+        if self.state == self.PLAYING:
+            print("ESTOU A ENVIAR PARA O CLIENTE. TENHO ESTE ESTADO:"+ str(self.state))
+            nameVideo = str(rtpPacket.nameVideo())
+            data = rtpPacket.getPayload()
+            frameNumber = int(rtpPacket.seqNum())
+            socketForClient = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+            for elem in lista:
+                print("Estou a retransmitir as streams para os clientes endereço: "+ str(elem[0]) + " na porta 5543")
+                socketForClient.sendto(RtpPacket.makeNewRtp(nameVideo,data,frameNumber),(elem[0],5543))
     
+    def receiveRtspPackets(self,rtspSocket):
+        """ Receção das mensagens do tipo RTSP """
+        while True:
+            dados = rtspSocket.recv(1024)
+            if dados:
+                request = RtspPacket()
+                request = request.decode(dados[0])
+                print("Os dados recebidos foram:"+ request.type)
+                self.processRtspRequest(request)
+
+    def processRtspRequest(self,dados):
+        """Processamento dos pedidos RTSP """  
+        requestType = dados.type
+        print(requestType)
+        print("ESTOU AQUI ")
+		# Process SETUP request
+        if requestType == self.SETUP:
+            if self.state == self.INIT:
+				# Update state
+                print("processing SETUP\n")
+                socketForClient = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                self.state = self.READY
+    
+        # Process PLAY request 		
+        elif requestType == self.PLAY:
+            if self.state == self.READY:
+                print("processing PLAY\n")
+                self.state = self.PLAYING
+
+        # Process PAUSE request
+        elif requestType == self.PAUSE:
+            if self.state == self.PLAYING:
+                print("processing PAUSE\n")
+                self.state = self.READY
+
+        # Process TEARDOWN request
+        elif requestType == self.TEARDOWN:
+            print("processing TEARDOWN\n")
+
+            # Close the RTP socket
+            socketForClient.close()  
+
     def run(self):
         self.openRtpPort()
         th = threading.Thread(target= self.serverWork).start()
         th1 = threading.Thread(target= self.listenRtp).start()
+        rtspSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+        rtspSocket.bind((self.ip,5555))
+        th2 = threading.Thread(target = self.receiveRtspPackets,args=(rtspSocket,)).start()
 

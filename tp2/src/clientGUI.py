@@ -104,7 +104,7 @@ class clientGUI:
                     print("Estou a receber streams de vídeo dos meus vizinhos")
                     print("Este é o current Number Frame:" + str(currentNumberFrame))
 
-                    if currentNumberFrame > self.frameNbr:
+                    if currentNumberFrame > self.frameNbr :
                         self.frameNbr = currentNumberFrame
                     cachename = self.writeFrame(rtpPacket.getPayload())
                     self.updateMovie(cachename)
