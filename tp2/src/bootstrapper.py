@@ -8,6 +8,13 @@ import json
 import pickle
 from RtspPacket import RtspPacket
 from RtpPacket import RtpPacket
+import time 
+
+packet_times = []
+packet_counter = 0 
+throughput = 0.0
+latency = 0.0
+reliability = 0.0 
 class bootstrapper:
 
     # Estado de streaming de video entre o RP e o content Server
@@ -33,6 +40,8 @@ class bootstrapper:
         self.movies = []
         self.rtspSeq = 0
         self.frameNbr = 0 
+        self.contentServer = ""
+        self.listContentServer = []
     
     def connectToNetwork(self):
         """ Criação do socket UDP a partir do qual o servidor bootstrapper irá receber pedidos dos clientes """
@@ -48,7 +57,12 @@ class bootstrapper:
     def dataTratamentType2(self,message,address):
         """ Função de tratamento de dados para mensagens com o type == 2 """
         self.movies.append(message["data"]["nameMovie"])
-        self.contentServer = address[0]
+        self.listContentServer.append(address[0])
+        global packet_counter
+        packet_counter += 1 # Cálculo do número de pacotes recebidos
+        current_time = time.time() # Cálculo do timestamp do pacote 
+        packet_times.append(current_time) # Inserção dos timestamp numa lista
+        self.calculate_metrics()
 
     def dataTratamentType4(self,message,address):
         """ Função de tratamento de dados para mensagens com o type == 4 """
@@ -109,7 +123,7 @@ class bootstrapper:
 
         request = RtspPacket()
         request = request.encode(type_request,{})
-        
+        print("Estou a enviar um pedido RTSP para este contentServer: "+ str(self.contentServer))
         self.rtspSocket.sendto(request,(self.contentServer,7777))
 
     def setupMovie(self):
@@ -135,6 +149,12 @@ class bootstrapper:
         """ Leitura dos pacotes RTP """
         while True:
                 data = self.rtpSocket.recv(20480000)
+                global packet_counter
+                packet_counter += 1 # Cálculo do número de pacotes recebidos
+                current_time = time.time() # Cálculo do timestamp do pacote 
+                packet_times.append(current_time) # Inserção dos timestamp numa lista
+                self.calculate_metrics()
+                print("Estou a enviar um pedido RTSP para este contentServer: "+ str(self.contentServer))
                 if data:
                     rtpPacket = RtpPacket()
                     rtpPacket.decode(data)
@@ -172,5 +192,24 @@ class bootstrapper:
             
             print("Estou a retransmitir as streams para o endereço: "+ str((ip,5543)))
             socketForServers.sendto(RtpPacket.makeNewRtp(nameVideo,data,frameNumber),(ip,5543))
+    
+    def calculate_metrics(self):
+        """ Função para monitorização dos servidores de conteúdo """
+
+        global packet_counter, packet_times, throughput, latency, reliability
+        throughputTemp = packet_counter / 10 # assume 10 segundos como janela de tempo
+        latencyTemp = sum(packet_times) / len(packet_times)
+        reliabilityTemp = (1 - len(packet_times) / 1000) * 100 # supondo 1000 pacotes na janela de tempo
+        if latencyTemp > latency:
+            latency = latencyTemp
+            throughput = throughputTemp
+            reliability = reliabilityTemp
+            for item in self.listContentServer:
+                if item != self.contentServer:
+                    self.contentServer = item
+        else:
+            latency = latencyTemp
+            throughput = throughputTemp
+            reliability = reliabilityTemp
 
 
