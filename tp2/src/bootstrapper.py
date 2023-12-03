@@ -70,7 +70,10 @@ class bootstrapper:
             answer=pickle.dumps({"type":4,"subtype":"answer","id":message["id"],"data":0,"nameVideo":message["nameVideo"]})
             self.socket.sendto(answer,address)
             # Conexão entre RP e o contentServer para pedir uma stream de vídeo ... 
-
+            self.rtspSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+            self.rtspSocket.bind(('',5543))
+            self.setupMovie()
+            self.playMovie()
     
     def dataTratamentType5(self,message,address):
         """ Função de tratamento de dados para mensagens com o type == 5 """
@@ -82,8 +85,7 @@ class bootstrapper:
                 self.trees[message["nameVideo"]].append(address)
             finally:
                 self.lock.release()
-        # Conexão entre RP e o contentServer para pedir uma stream de vídeo ... 
-
+        # Conexão entre RP e o contentServer para pedir uma stream de vídeo ...
         self.rtspSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
         self.rtspSocket.bind(('',5543))
         self.setupMovie()
@@ -114,7 +116,6 @@ class bootstrapper:
             message, address = self.socket.recvfrom(1024)     # O servidor pode receber até 1024 bytes de informação
             t1 = threading.Thread(target=self.bootstrapperDataTratament,args=(message,address),name='t1') # Criação de threads para responder aos pedidos dos clientes
             t1.start()
-            t1.join()
     
     def sendRtspRequest(self,requestCode):
         """ Send RTSP request to the server content """

@@ -13,7 +13,7 @@ class client:
         """ Criação do socket UDP para a ligação entre cliente e servidor """
         self.socket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
         self.socketStream = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-        self.socketStream.bind(('',5555))
+        self.socketStream.bind((self.ipHost,5555))
 
     def sendMessage(self):
         """ Envio de uma mensagem do cliente para o servidor vizinho """
