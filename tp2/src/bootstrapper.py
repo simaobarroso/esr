@@ -53,21 +53,27 @@ class bootstrapper:
     def dataTratamentType4(self,message,address):
         """ Função de tratamento de dados para mensagens com o type == 4 """
         if message["subtype"] == 'request':  # Resposta ás mensagens de flood recebidas pelo RP 
-                if message["nameVideo"] in self.movies:
-                    self.lock.acquire()
-                    try:
-                        if message["nameVideo"] not in self.trees:
-                            self.trees[message["nameVideo"]] = []
-                        self.trees[message["nameVideo"]].append(address)
-                    finally:
-                        self.lock.release()
-                    answer=pickle.dumps({"type":4,"subtype":"answer","id":message["id"],"data":"I'm the RP ..."})
-                    self.socket.sendto(answer,address)
-                    # Conexão entre RP e o contentServer para pedir uma stream de vídeo ... 
-                    self.rtspSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-                    self.rtspSocket.bind(('',5543))
-                    self.setupMovie()
-                    self.playMovie()
+            answer=pickle.dumps({"type":4,"subtype":"answer","id":message["id"],"data":0,"nameVideo":message["nameVideo"]})
+            self.socket.sendto(answer,address)
+            # Conexão entre RP e o contentServer para pedir uma stream de vídeo ... 
+
+    
+    def dataTratamentType5(self,message,address):
+        """ Função de tratamento de dados para mensagens com o type == 5 """
+        if message["nameVideo"] in self.movies:
+            self.lock.acquire()
+            try:
+                if message["nameVideo"] not in self.trees:
+                    self.trees[message["nameVideo"]] = []
+                self.trees[message["nameVideo"]].append(address)
+            finally:
+                self.lock.release()
+        # Conexão entre RP e o contentServer para pedir uma stream de vídeo ... 
+
+        self.rtspSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+        self.rtspSocket.bind(('',5543))
+        self.setupMovie()
+        self.playMovie()
 
                     
   
@@ -83,7 +89,9 @@ class bootstrapper:
         elif message["type"] == 2:  # Receção do ficheiro de metadados proveniente do servidor de conteúdos
             self.dataTratamentType2(message,address)
         elif message["type"] == 4:
-            self.dataTratamentType4(message,address)  
+            self.dataTratamentType4(message,address)
+        elif message["type"] == 5:
+            self.dataTratamentType5(message,address)    
 
 
     def bootstrapperWork(self):
