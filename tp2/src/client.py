@@ -6,8 +6,9 @@ class client:
     def __init__(self,ipHost):
         self.ipHost = ipHost # IP do próprio cliente
         self.connectToNetwork() # Socket responsável pela conexão entre o cliente e o servidor
-        self.neighbors_IP_Port = []
-    
+        self.ip = "" #endereço do servidor a contactar
+        self.port = 7777 # porta do servidor a contactar
+
     def connectToNetwork(self):
         """ Criação do socket UDP para a ligação entre cliente e servidor """
         self.socket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
@@ -40,7 +41,9 @@ class client:
         """ Função de tratamento de dados para mensagens com o type == 3 """
         message = pickle.loads(message)
         if message["subtype"] == 'answer': # Pedido de streaming de um vídeo por parte de um cliente 
-            print(message)
+            message = pickle.dumps({"type":5,"nameVideo":"movie.Mjpeg"})
+            self.socket.sendto(message,(self.ip,7777))
+        
                 
     def receiveMessage(self):
         """ Receção de mensagens e tratamento das mesmas por parte do cliente """
