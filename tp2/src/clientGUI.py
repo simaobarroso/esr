@@ -97,18 +97,19 @@ class clientGUI:
         """ Listen for RTP packets """
         while True:
             try:
-                print("ole")
-                data = self.rtpSocket.recv(20480000)
-                if data:
-                    rtpPacket = RtpPacket()
-                    rtpPacket.decode(data)
-                    currentNumberFrame = rtpPacket.seqNum()
-                    print("Estou a receber streams de vídeo dos meus vizinhos")
-                    print("Este é o current Number Frame:" + str(currentNumberFrame))
-                    if currentNumberFrame > self.frameNbr :
-                        self.frameNbr = currentNumberFrame
-                    cachename = self.writeFrame(rtpPacket.getPayload())
-                    self.updateMovie(cachename)
+                if self.state == self.PLAYING:
+                    print("ole")
+                    data = self.rtpSocket.recv(20480000)
+                    if data:
+                        rtpPacket = RtpPacket()
+                        rtpPacket.decode(data)
+                        currentNumberFrame = rtpPacket.seqNum()
+                        print("Estou a receber streams de vídeo dos meus vizinhos")
+                        print("Este é o current Number Frame:" + str(currentNumberFrame))
+                        if currentNumberFrame > self.frameNbr :
+                            self.frameNbr = currentNumberFrame
+                        cachename = self.writeFrame(rtpPacket.getPayload())
+                        self.updateMovie(cachename)
             except Exception as e: # Para o vídeo quando está em PAUSE ou em TEARDOWN 
                 if self.playEvent.isSet():
                     print("aqui1")

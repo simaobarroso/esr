@@ -189,7 +189,10 @@ class server:
                     #print("Estou a receber streams de vídeo dos meus vizinhos")
                     #print("Este é o current Number Frame:" + str(currentNumberFrame))
                     th = threading.Thread(target= self.sendRtpForServers, args=(rtpPacket,)).start()
-                    th1 = threading.Thread(target= self.sendRtpForClients, args=(rtpPacket,)).start()
+                    print("ESTE É O MEU ESTADO1: "+ str(self.state))
+                    if self.state == self.PLAYING:
+                        print("ESTE É O MEU ESTADO2: "+ str(self.state))
+                        th1 = threading.Thread(target= self.sendRtpForClients, args=(rtpPacket,)).start()
                     # th.join()
             except: # Para o vídeo quando está em PAUSE ou em TEARDOWN 
                 #if self.playEvent.isSet():
