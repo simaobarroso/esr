@@ -88,6 +88,8 @@ class server:
 
         elif message["subtype"] == 'answer':
                 print("Answer da rede propagado para quem enviou a pergunta")
+                print(str(self.messages))
+                print(message["id"])
                 ip_dest= self.messages[message["id"]]
                 message["data"] += 1
                 if(message["nameVideo"]) not in self.paths2:
