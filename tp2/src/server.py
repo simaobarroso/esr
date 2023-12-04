@@ -39,22 +39,25 @@ class server:
         self.socket.bind((self.ip,self.port))
 
     def dataTratamentType3(self, message,address):
+        print("FODA-SE 1")
         """ Função de tratamento de dados para mensagens com o type == 3 """
         self.clients.append(address)
         if message["subtype"] == 'request': # Pedido de streaming de um vídeo por parte de um cliente 
                 if message["nameVideo"] in self.runningVideos: # O router possui as streams de vídeo desejadas 
-                    print("Vou dar a streaming de vídeo que o cliente pediu ...")
+                    message=pickle.dumps({"type":3,"subtype":"answer","id":ip_dest,"data":0,"nameVideo":message["nameVideo"]})
+                    for a in self.neighbors:
+                        ip_Porta = a.split('-')
+                        ip = ip_Porta[0]
+                        port = int(ip_Porta[1])
+                        print(message)
+                        if ip != address[0]:
+                            self.socket.sendto(message,(ip,port))
+                    
                 else : # O router não possui a stream de vídeo desejada, logo terá de perguntar aos vizinhos se têm 
                     print("Flood da rede propagado para os vizinhos ...")
                     self.messages[message["id"]]=address
                     id_message=message["id"]
                     self.lock.acquire()
-                    try:
-                        if message["nameVideo"] not in self.paths:
-                            self.paths[message["nameVideo"]] = []
-                        self.paths[message["nameVideo"]].append(address)
-                    finally:
-                        self.lock.release()
                     message=pickle.dumps({"type":4,"subtype":"request","id":id_message,"nameVideo":message["nameVideo"]})
                     for a in self.neighbors:
                         ip_Porta = a.split('-')
@@ -64,6 +67,7 @@ class server:
                             self.socket.sendto(message,(ip,port))
 
     def dataTratamentType4(self,message,address):
+        print("FODA-SE")
         """ Função de tratamento de dados para mensagens com o type == 4 """
         if message["subtype"] == 'request':
             if message["nameVideo"] in self.runningVideos: # O router possui as streams de vídeo desejadas por isso vou mandar para o router vizinho
@@ -94,14 +98,19 @@ class server:
                 self.paths2[message["nameVideo"]].append((address,message["data"]))
                 
                 message = pickle.dumps(message)
+                print("OS MEUS VIZINHO SÃO" + str(self.neighbors))
+                print("O pedido para mandar é "+ str(ip_dest))
                 for a in self.neighbors:
                     ip_Porta = a.split('-')
                     ip = ip_Porta[0]
                     port = int(ip_Porta[1])
-                    if ip==ip_dest:
-                        self.socket.sendto(message,(ip_dest,port))
+                    print("Teste: "+str(ip)+" ,  "+str(ip_dest[0]))
+                    if ip==ip_dest[0]:
+                        print("redirecionei a resposta para o "+ip_dest[0])
+                        self.socket.sendto(message,ip_dest)
                 for cl in self.clients:
                     message=pickle.dumps({"type":3,"subtype":"answer","id":ip_dest,"data":"A stream pedida irá ser transmitida ..."})
+                    print("redirecionei a resposta para o "+str(cl))
                     self.socket.sendto(message,cl)
                 self.clients = []
         
@@ -114,10 +123,12 @@ class server:
             self.paths[message["nameVideo"]].append(address)
         finally:
             self.lock.release()
+
         if message["nameVideo"] not in self.runningVideos: # O router não possui as streams de vídeo desejadas
             ip,port=self.paths2[message["nameVideo"]][0][0]
+            self.runningVideos.append(message["nameVideo"])
             message=pickle.dumps(message)
-            print(self.paths2)
+            #print(self.paths2)
             self.socket.sendto(message,(ip,port))
 
 
@@ -178,8 +189,8 @@ class server:
                     rtpPacket = RtpPacket()
                     rtpPacket.decode(data)
                     currentNumberFrame = rtpPacket.seqNum()
-                    print("Estou a receber streams de vídeo dos meus vizinhos")
-                    print("Este é o current Number Frame:" + str(currentNumberFrame))
+                    #print("Estou a receber streams de vídeo dos meus vizinhos")
+                    #print("Este é o current Number Frame:" + str(currentNumberFrame))
                     th = threading.Thread(target= self.sendRtpForServers, args=(rtpPacket,)).start()
                     th1 = threading.Thread(target= self.sendRtpForClients, args=(rtpPacket,)).start()
                     # th.join()
@@ -203,7 +214,7 @@ class server:
         frameNumber = int(rtpPacket.seqNum())
         socketForServers = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
         for elem in lista:
-            print("Estou a retransmitir as streams para o endereço: "+ str(elem[0]) + " na porta 5543")
+            #print("Estou a retransmitir as streams para o endereço: "+ str(elem[0]) + " na porta 5543")
             socketForServers.sendto(RtpPacket.makeNewRtp(nameVideo,data,frameNumber),(elem[0],5543))
 
     def sendRtpForClients(self,rtpPacket):
@@ -219,7 +230,7 @@ class server:
             frameNumber = int(rtpPacket.seqNum())
             socketForClient = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
             for elem in lista:
-                print("Estou a retransmitir as streams para os clientes endereço: "+ str(elem[0]) + " na porta 5543")
+                #print("Estou a retransmitir as streams para os clientes endereço: "+ str(elem[0]) + " na porta 5543")
                 socketForClient.sendto(RtpPacket.makeNewRtp(nameVideo,data,frameNumber),(elem[0],5543))
     
     def receiveRtspPackets(self,rtspSocket):

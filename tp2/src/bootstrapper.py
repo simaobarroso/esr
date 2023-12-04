@@ -70,12 +70,13 @@ class bootstrapper:
             answer=pickle.dumps({"type":4,"subtype":"answer","id":message["id"],"data":0,"nameVideo":message["nameVideo"]})
             self.socket.sendto(answer,address)
             # Conexão entre RP e o contentServer para pedir uma stream de vídeo ... 
-            self.rtspSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-            self.rtspSocket.bind(('',5543))
-            self.setupMovie()
-            self.playMovie()
+            #self.rtspSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+            #self.rtspSocket.bind(('',5543))
+            #self.setupMovie()
+            #self.playMovie()
     
     def dataTratamentType5(self,message,address):
+        print("AQUI")
         """ Função de tratamento de dados para mensagens com o type == 5 """
         if message["nameVideo"] in self.movies:
             self.lock.acquire()
