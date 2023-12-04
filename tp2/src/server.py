@@ -181,19 +181,20 @@ class server:
         """ Leitura dos pacotes RTP """
         while True:
             try:
-                data = self.rtpSocket.recv(20480000)
-                if data:
-                    rtpPacket = RtpPacket()
-                    rtpPacket.decode(data)
-                    currentNumberFrame = rtpPacket.seqNum()
-                    #print("Estou a receber streams de vídeo dos meus vizinhos")
-                    #print("Este é o current Number Frame:" + str(currentNumberFrame))
-                    th = threading.Thread(target= self.sendRtpForServers, args=(rtpPacket,)).start()
-                    print("ESTE É O MEU ESTADO1: "+ str(self.state))
-                    if self.state == self.PLAYING:
-                        print("ESTE É O MEU ESTADO2: "+ str(self.state))
-                        th1 = threading.Thread(target= self.sendRtpForClients, args=(rtpPacket,)).start()
-                    # th.join()
+                if self.state != self.TEARDOWN:
+                    data = self.rtpSocket.recv(20480000)
+                    if data:
+                        rtpPacket = RtpPacket()
+                        rtpPacket.decode(data)
+                        currentNumberFrame = rtpPacket.seqNum()
+                        #print("Estou a receber streams de vídeo dos meus vizinhos")
+                        #print("Este é o current Number Frame:" + str(currentNumberFrame))
+                        th = threading.Thread(target= self.sendRtpForServers, args=(rtpPacket,)).start()
+                        print("ESTE É O MEU ESTADO1: "+ str(self.state))
+                        if self.state == self.PLAYING:
+                            print("ESTE É O MEU ESTADO2: "+ str(self.state))
+                            th1 = threading.Thread(target= self.sendRtpForClients, args=(rtpPacket,)).start()
+                        # th.join()
             except: # Para o vídeo quando está em PAUSE ou em TEARDOWN 
                 #if self.playEvent.isSet():
                     #break
@@ -271,7 +272,7 @@ class server:
         # Process TEARDOWN request
         elif requestType == self.TEARDOWN:
             print("processing TEARDOWN\n")
-
+            self.state = self.TEARDOWN
             # Close the RTP socket
             socketForClient.close()  
 

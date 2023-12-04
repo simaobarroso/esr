@@ -160,7 +160,7 @@ class clientGUI:
             self.requestSent = self.PAUSE
         elif requestCode == self.TEARDOWN and not self.state == self.INIT:
             self.rtspSeq += 1
-            print("Vamos dar PAUSE do vídeo")
+            print("Vamos dar TEARDOWN do vídeo")
             type_request = self.TEARDOWN
             self.requestSent = self.TEARDOWN
 
