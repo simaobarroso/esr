@@ -43,6 +43,7 @@ class client:
         if message["subtype"] == 'answer': # Pedido de streaming de um vídeo por parte de um cliente 
             message = pickle.dumps({"type":5,"nameVideo":"movie.Mjpeg"})
             self.socket.sendto(message,(self.ip,7777))
+            print("ENVIEI")
         
                 
     def receiveMessage(self):
