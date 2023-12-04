@@ -85,14 +85,7 @@ class server:
                 self.messages[message["id"]]= address
                 message=pickle.dumps({"type":4,"subtype":"request","id":id_message,"nameVideo":message["nameVideo"]})
                 self.flood(message,address)
-                """
-                for a in self.neighbours:
-                    ip_Porta = a.split('-')
-                    ip = ip_Porta[0]
-                    port = int(ip_Porta[1])
-                    if ip != address[0]:
-                        self.socket.sendto(message,(ip,port))
-                """
+
         elif message["subtype"] == 'answer':
                 print("Answer da rede propagado para quem enviou a pergunta")
                 ip_dest= self.messages[message["id"]]
@@ -119,11 +112,9 @@ class server:
                 self.clients = []
         
     def dataTratamentType5(self, message,address):
-        print("TIPO 5")
         """ Função de tratamento de dados para mensagens com o type == 5 """ 
         self.lock.acquire()
         try:
-            print("TIPO 5")
             if message["nameVideo"] not in self.paths:
                 self.paths[message["nameVideo"]] = []
             self.paths[message["nameVideo"]].append(address)
@@ -145,8 +136,6 @@ class server:
     def dataTratament(self,message,address):
         """ Função de tratamento dos dados recebidos no socket UDP """
         message = pickle.loads(message)
-        #if message["type"] == 3 : # Se o tipo da mensagem for de pedir uma stream de video por parte de um cliente 
-        #    self.dataTratamentType3(message,address)
         if message["type"] == 4: # Se o tipo da mensagem for de fazer flood na rede 
             self.dataTratamentType4(message,address)
         if message["type"] == 5: # Se o tipo da mensagem for de fazer flood na rede 
