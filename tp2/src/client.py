@@ -19,7 +19,7 @@ class client:
     def sendMessage(self):
         """ Envio de uma mensagem do cliente para o servidor vizinho """
         print("VOU ENVIAR UMA MENSAGEM PARA O MEU VIZINHO A PEDIR UMA STREAM DE VÍDEO")
-        message = pickle.dumps({"type":3,"subtype":"request","id":self.ipHost,"nameVideo":"movie.Mjpeg"}) # Mensagem de um cliente para o servidor vizinho, para pedir uma stream 
+        message = pickle.dumps({"type":4,"subtype":"request","id":self.ipHost,"nameVideo":"movie.Mjpeg"}) # Mensagem de um cliente para o servidor vizinho, para pedir uma stream 
         self.socket.sendto(message,(self.ip,self.port))
     
     def sendFirstMessage(self,ip,port):
