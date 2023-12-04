@@ -12,6 +12,7 @@ class client:
     def connectToNetwork(self):
         """ Criação do socket UDP para a ligação entre cliente e servidor """
         self.socket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+        self.socket.bind((self.ipHost,7777))
         self.socketStream = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
         self.socketStream.bind((self.ipHost,5555))
 
@@ -54,7 +55,7 @@ class client:
     def client_run(self):
         """ Interface gráfica co cliente """
         root = Tk()
-        app = clientGUI(root,self.ip,self.socketStream)
+        app = clientGUI(root,self.ip,self.socketStream,self.ipHost)
         app.master.title(" Streaming de vídeo ")
         root.mainloop()
 

@@ -39,24 +39,22 @@ class server:
         self.socket.bind((self.ip,self.port))
 
     def dataTratamentType3(self, message,address):
-        print("FODA-SE 1")
+        id_message=message["id"]
         """ Função de tratamento de dados para mensagens com o type == 3 """
         self.clients.append(address)
+
+        print(message)
         if message["subtype"] == 'request': # Pedido de streaming de um vídeo por parte de um cliente 
+                print(self.runningVideos)
                 if message["nameVideo"] in self.runningVideos: # O router possui as streams de vídeo desejadas 
-                    message=pickle.dumps({"type":3,"subtype":"answer","id":ip_dest,"data":0,"nameVideo":message["nameVideo"]})
-                    for a in self.neighbors:
-                        ip_Porta = a.split('-')
-                        ip = ip_Porta[0]
-                        port = int(ip_Porta[1])
-                        print(message)
-                        if ip != address[0]:
-                            self.socket.sendto(message,(ip,port))
+                    message=pickle.dumps({"type":4,"subtype":"answer","id":id_message,"data":0,"nameVideo":message["nameVideo"]})
+                    #print("Mandei mensagem para "+ str(ip))
+                    self.socket.sendto(message,address)
                     
                 else : # O router não possui a stream de vídeo desejada, logo terá de perguntar aos vizinhos se têm 
                     print("Flood da rede propagado para os vizinhos ...")
                     self.messages[message["id"]]=address
-                    id_message=message["id"]
+                    
                     message=pickle.dumps({"type":4,"subtype":"request","id":id_message,"nameVideo":message["nameVideo"]})
                     for a in self.neighbors:
                         ip_Porta = a.split('-')
@@ -69,18 +67,14 @@ class server:
         print("FODA-SE")
         """ Função de tratamento de dados para mensagens com o type == 4 """
         if message["subtype"] == 'request':
+            id_message=message["id"]
             if message["nameVideo"] in self.runningVideos: # O router possui as streams de vídeo desejadas por isso vou mandar para o router vizinho
-                message=pickle.dumps({"type":3,"subtype":"answer","id":ip_dest,"data":0,"nameVideo":message["nameVideo"]})
-                for a in self.neighbors:
-                    ip_Porta = a.split('-')
-                    ip = ip_Porta[0]
-                    port = int(ip_Porta[1])
-                    if ip != address[0]:
-                        self.socket.sendto(message,(ip,port))
+                message=pickle.dumps({"type":4,"subtype":"answer","id":id_message,"data":0,"nameVideo":message["nameVideo"]})
+                self.socket.sendto(message,address)
+            
             else : # O router não possui a stream de vídeo desejada, logo terá de perguntar aos vizinhos se têm 
                 print("Flood da rede propagado para os vizinhos ...")
                 self.messages[message["id"]]= address
-                id_message=message["id"]
                 message=pickle.dumps({"type":4,"subtype":"request","id":id_message,"nameVideo":message["nameVideo"]})
                 for a in self.neighbors:
                     ip_Porta = a.split('-')
@@ -125,15 +119,14 @@ class server:
         finally:
             self.lock.release()
 
-        print("aqui")
         if message["nameVideo"] not in self.runningVideos: # O router não possui as streams de vídeo desejadas
-            print("caralho")
             ip,port=self.paths2[message["nameVideo"]][0][0]
             self.runningVideos.append(message["nameVideo"])
             message=pickle.dumps(message)
             #print(self.paths2)
             print("ENVIEI TIPO 5 PARA " + str(ip))
             self.socket.sendto(message,(ip,port))
+
 
 
         
@@ -207,7 +200,7 @@ class server:
                     #self.rtpSocket.close()
                 break
     
-    def sendRtpForServers(self,rtpPacket):
+    def sendRtpForServers(self,rtpPacket): 
         self.lock.acquire()
         try:
             lista = self.paths[rtpPacket.nameVideo()]
@@ -228,7 +221,7 @@ class server:
         finally:
             self.lock.release()
         if self.state == self.PLAYING:
-            print("ESTOU A ENVIAR PARA O CLIENTE. TENHO ESTE ESTADO:"+ str(self.state))
+            #print("ESTOU A ENVIAR PARA O CLIENTE. TENHO ESTE ESTADO:"+ str(self.state))
             nameVideo = str(rtpPacket.nameVideo())
             data = rtpPacket.getPayload()
             frameNumber = int(rtpPacket.seqNum())

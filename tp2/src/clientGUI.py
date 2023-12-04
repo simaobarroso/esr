@@ -22,7 +22,7 @@ class clientGUI:
     PLAYING = 2
     state = INIT 
 
-    def __init__(self,master,neighbourAddress,socketStream):
+    def __init__(self,master,neighbourAddress,socketStream,ipHost):
         """ Inicialização do cliente """
         self.master = master 
         self.master.protocol("WM_DELETE_WINDOW",self.handler)
@@ -33,6 +33,7 @@ class clientGUI:
         self.requestSent = -1
         self.teardownAcked = 0
         self.frameNbr = 0
+        self.ipHost= ipHost
     
     def createWidgets(self):
         """Build GUI."""
@@ -96,6 +97,7 @@ class clientGUI:
         """ Listen for RTP packets """
         while True:
             try:
+                print("ole")
                 data = self.rtpSocket.recv(20480000)
                 if data:
                     rtpPacket = RtpPacket()
@@ -103,24 +105,27 @@ class clientGUI:
                     currentNumberFrame = rtpPacket.seqNum()
                     print("Estou a receber streams de vídeo dos meus vizinhos")
                     print("Este é o current Number Frame:" + str(currentNumberFrame))
-
                     if currentNumberFrame > self.frameNbr :
                         self.frameNbr = currentNumberFrame
                     cachename = self.writeFrame(rtpPacket.getPayload())
                     self.updateMovie(cachename)
-            except: # Para o vídeo quando está em PAUSE ou em TEARDOWN 
+            except Exception as e: # Para o vídeo quando está em PAUSE ou em TEARDOWN 
                 if self.playEvent.isSet():
-                    
+                    print("aqui1")
                     break
 
                 if self.teardownAcked == 1:
-                    
+                    print("aqui2")
                     self.rtpSocket.shutdown(socket.SHUT_RDWR)
                     self.rtpSocket.close()
+
+
+                print("aqui3")
+                print(e)
                 break
     
     def writeFrame(self,data):
-        cachename = CACHE_FILE_NAME + CACHE_FILE_EXT
+        cachename = str(self.ipHost)+"_"+CACHE_FILE_NAME + CACHE_FILE_EXT
         file = open(cachename, "wb")
         file.write(data)
         file.close()
