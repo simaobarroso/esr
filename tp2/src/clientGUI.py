@@ -147,22 +147,22 @@ class clientGUI:
             print("Vamos dar SETUP do vídeo")
             self.rtspSeq += 1
             type_request = self.SETUP
-            self.requestSent = self.SETUP  
+            #self.requestSent = self.SETUP  
         elif requestCode == self.PLAY and self.state == self.READY:
             self.rtspSeq += 1
             print("Vamos dar PLAY do vídeo")
             type_request = self.PLAY
-            self.requestSent = self.PLAY
+            #self.requestSent = self.PLAY
         elif requestCode == self.PAUSE and self.state == self.PLAYING:
             self.rtspSeq += 1
             print("Vamos dar PAUSE do vídeo")
             type_request = self.PAUSE
-            self.requestSent = self.PAUSE
+            #self.requestSent = self.PAUSE
         elif requestCode == self.TEARDOWN and not self.state == self.INIT:
             self.rtspSeq += 1
             print("Vamos dar TEARDOWN do vídeo")
             type_request = self.TEARDOWN
-            self.requestSent = self.TEARDOWN
+            #self.requestSent = self.TEARDOWN
 
         request = RtspPacket()
         request = request.encode(type_request,{})

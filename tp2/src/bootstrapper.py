@@ -42,7 +42,8 @@ class bootstrapper:
         self.frameNbr = 0 
         self.contentServer = ""
         self.listContentServer = []
-    
+        self.rtspSocket=None
+
     def connectToNetwork(self):
         """ Criação do socket UDP a partir do qual o servidor bootstrapper irá receber pedidos dos clientes """
         self.socket = socket.socket (socket.AF_INET, socket.SOCK_DGRAM)
@@ -88,8 +89,9 @@ class bootstrapper:
             finally:
                 self.lock.release()
         # Conexão entre RP e o contentServer para pedir uma stream de vídeo ...
-        self.rtspSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-        self.rtspSocket.bind(('',5543))
+        if self.rtspSocket == None or not isinstance(self.rtspSocket, socket.socket):
+            self.rtspSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+            self.rtspSocket.bind(('',5543))
         self.setupMovie()
         self.playMovie()
 

@@ -33,6 +33,7 @@ class server:
         self.clients=[]
         self.lock = threading.Lock()
         self.numberTeardown = 0 
+        self.rtpSocket=None
 
     def connectToNetwork(self):
         """ Criação do socket UDP a partir do qual o servidor irá receber pedidos dos clientes """
@@ -140,6 +141,9 @@ class server:
         finally:
             self.lock.release()
 
+        if self.rtpSocket is None or not isinstance(self.rtpSocket, socket.socket):
+            self.openRtpPort()
+            th1 = threading.Thread(target= self.listenRtp).start()
         if message["nameVideo"] not in self.runningVideos: # O router não possui as streams de vídeo desejadas
             ip,port=self.paths2[message["nameVideo"]][0][0]
             self.runningVideos.append(message["nameVideo"])
@@ -323,9 +327,9 @@ class server:
                         self.socket.sendto(message,(ip,porta))
 
     def run(self):
-        self.openRtpPort()
+        #self.openRtpPort()
         th = threading.Thread(target= self.serverWork).start()
-        th1 = threading.Thread(target= self.listenRtp).start()
+        #th1 = threading.Thread(target= self.listenRtp).start()
         rtspSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
         rtspSocket.bind((self.ip,5555))
         th2 = threading.Thread(target = self.receiveRtspPackets,args=(rtspSocket,)).start()
