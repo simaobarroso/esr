@@ -6,7 +6,7 @@ import threading
 import pickle
 from RtspPacket import RtspPacket
 from RtpPacket import RtpPacket
-
+import re
 class server:
     # RTSP States 
     SETUP = 'SETUP'
@@ -32,6 +32,7 @@ class server:
         self.messages={}
         self.clients=[]
         self.lock = threading.Lock()
+        self.numberTeardown = 0 
 
     def connectToNetwork(self):
         """ Criação do socket UDP a partir do qual o servidor irá receber pedidos dos clientes """
@@ -77,7 +78,7 @@ class server:
             if address not in self.clients:
                 self.clients.append(address)
             id_cliente=message["id"]
-            print("Mesagem do cliente " + str(id_cliente))
+            print("Mensagem do cliente " + str(id_cliente))
             if message["nameVideo"] in self.runningVideos: # O router possui as streams de vídeo desejadas por isso vou mandar para o router vizinho
                 message=pickle.dumps({"type":4,"subtype":"answer","id":id_cliente,"data":0,"nameVideo":message["nameVideo"]})
                 self.socket.sendto(message,address)
@@ -147,6 +148,20 @@ class server:
             print("ENVIEI TIPO 5 PARA " + str(ip))
             self.socket.sendto(message,(ip,port))
 
+    def dataTratamentType2(self,message,address):
+        """ Tratamento das mensagens do tipo 2 """
+        print("ESTOU A TRATAR AS MENSAGENS COM O TIPO 2 ")
+        if message["subtype"] == "request" and message["data"] == "Close rtp connection ...":
+            if message["nameVideo"] in self.runningVideos:
+                print("Lista de envio de streams antes da remoção: "+str(self.paths[message["nameVideo"]]))
+                self.lock.acquire()
+                try:
+                    self.paths[message["nameVideo"]].remove(address)
+                finally:
+                    self.lock.release()
+                print("Lista de envio de streams depois da remoção: "+str(self.paths[message["nameVideo"]]))
+            else:
+                print("NÃO ESTOU A TRANSMITIR ESSE VÍDEO ...")
 
     def dataTratament(self,message,address):
         """ Função de tratamento dos dados recebidos no socket UDP """
@@ -155,6 +170,8 @@ class server:
             self.dataTratamentType4(message,address)
         if message["type"] == 5: # Se o tipo da mensagem for de fazer flood na rede 
             self.dataTratamentType5(message,address)
+        if message["type"] == 2: # Se o tipo da mensagem for de fazer flood na rede 
+            self.dataTratamentType2(message,address)
 
     def sendFirstMessage(self,ip,port):
         """ Envio da mensagem inicial de um servidor oNode para um bootstrapper, para saber os seus vizinhos """
@@ -244,10 +261,10 @@ class server:
             nameVideo = str(rtpPacket.nameVideo())
             data = rtpPacket.getPayload()
             frameNumber = int(rtpPacket.seqNum())
-            socketForClient = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+            self.socketForClient = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
             for elem in lista:
                 #print("Estou a retransmitir as streams para os clientes endereço: "+ str(elem[0]) + " na porta 5543")
-                socketForClient.sendto(RtpPacket.makeNewRtp(nameVideo,data,frameNumber),(elem[0],5543))
+                self.socketForClient.sendto(RtpPacket.makeNewRtp(nameVideo,data,frameNumber),(elem[0],5543))
     
     def receiveRtspPackets(self,rtspSocket):
         """ Receção das mensagens do tipo RTSP """
@@ -288,8 +305,22 @@ class server:
         elif requestType == self.TEARDOWN:
             print("processing TEARDOWN\n")
             self.state = self.TEARDOWN
+            self.numberTeardown += 1 
             # Close the RTP socket
-            socketForClient.close()  
+            self.socketForClient.close()  
+            if len(self.clients) == self.numberTeardown:
+                print("FECHEI O SOCKET RTP. LOGO NÃO RECEBO STREAMS")
+                self.rtpSocket.close()
+                for v in self.neighbours:
+                    print("VOU ENVIAR O TEARDOWN DA LIGAÇÃO PARA OS MEUS VIZINHOS ...")
+                    padrao = re.compile(r'(\d+\.\d+\.\d+\.\d+)-(\d+)')
+                    matching = padrao.match(v)
+                    if matching:
+                        # Extrai os valores correspondentes
+                        ip = matching.group(1)
+                        porta = int(matching.group(2))
+                        message=pickle.dumps({"type":2,"subtype":"request","data":"Close rtp connection ...","nameVideo":"movie.Mjpeg"})
+                        self.socket.sendto(message,(ip,porta))
 
     def run(self):
         self.openRtpPort()
