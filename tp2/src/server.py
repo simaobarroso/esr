@@ -92,41 +92,42 @@ class server:
             print(str(self.messages))
             print("RECBI ESTA MENSAGEM " +str(message["id"]) + " do endereço " + str(address))
             print(message)
-            ip_dest= self.messages[message["id"]]
             message["data"] += 1
             if(message["nameVideo"]) not in self.paths2:
                 self.paths2[message["nameVideo"]]=[]
             self.paths2[message["nameVideo"]].append((address,message["data"]))
             
-            print("RECBI ESTA MENSAGEM olee " +str(message["id"]))
-            message = pickle.dumps(message)
-            print("OS MEUS VIZINHO SÃO" + str(self.neighbours))
-            print("O pedido para mandar é "+ str(ip_dest))
-            
-            for cl in self.clients:
-                #message=pickle.dumps({"type":4,"subtype":"answer","id":ip_dest,"data":"A stream pedida irá ser transmitida ..."})
-                #print("redirecionei a resposta para o "+str(cl))
-                self.socket.sendto(message,cl)
-            """
-            for a in self.neighbours:
-                ip_Porta = a.split('-')
-                ip = ip_Porta[0]
-                port = int(ip_Porta[1])
-                print("Teste: "+str(ip)+" ,  "+str(ip_dest[0]))
-                if ip==ip_dest[0]:
-                    print("redirecionei a resposta para o "+ip_dest[0])
-                    self.socket.sendto(message,ip_dest)
-            """
-            #for cl in self.clients:
-                #message=pickle.dumps({"type":4,"subtype":"answer","id":ip_dest,"data":"A stream pedida irá ser transmitida ..."})
-                #print("redirecionei a resposta para o "+str(cl))
-                #self.socket.sendto(message,cl)
-            
-            #if ip_dest in self.clients:
-                #message=pickle.dumps({"type":4,"subtype":"answer","id":ip_dest,"data":"A stream pedida irá ser transmitida ..."})
-                #print("redirecionei a resposta para o "+str(cl))
-                #self.socket.sendto(message,ip_dest)
-            #self.clients.remove(ip_dest)
+            if message["id"] in self.messages:
+                ip_dest= self.messages[message["id"]]
+                print("RECBI ESTA MENSAGEM olee " +str(message["id"]))
+                message = pickle.dumps(message)
+                print("OS MEUS VIZINHO SÃO" + str(self.neighbours))
+                print("O pedido para mandar é "+ str(ip_dest))
+                
+                for cl in self.clients:
+                    #message=pickle.dumps({"type":4,"subtype":"answer","id":ip_dest,"data":"A stream pedida irá ser transmitida ..."})
+                    #print("redirecionei a resposta para o "+str(cl))
+                    self.socket.sendto(message,cl)
+                """
+                for a in self.neighbours:
+                    ip_Porta = a.split('-')
+                    ip = ip_Porta[0]
+                    port = int(ip_Porta[1])
+                    print("Teste: "+str(ip)+" ,  "+str(ip_dest[0]))
+                    if ip==ip_dest[0]:
+                        print("redirecionei a resposta para o "+ip_dest[0])
+                        self.socket.sendto(message,ip_dest)
+                """
+                #for cl in self.clients:
+                    #message=pickle.dumps({"type":4,"subtype":"answer","id":ip_dest,"data":"A stream pedida irá ser transmitida ..."})
+                    #print("redirecionei a resposta para o "+str(cl))
+                    #self.socket.sendto(message,cl)
+                
+                #if ip_dest in self.clients:
+                    #message=pickle.dumps({"type":4,"subtype":"answer","id":ip_dest,"data":"A stream pedida irá ser transmitida ..."})
+                    #print("redirecionei a resposta para o "+str(cl))
+                    #self.socket.sendto(message,ip_dest)
+                #self.clients.remove(ip_dest)
         
     def dataTratamentType5(self, message,address):
         """ Função de tratamento de dados para mensagens com o type == 5 """ 
