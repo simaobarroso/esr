@@ -1,5 +1,6 @@
 import sys
 from client import client
+import threading
 
 if __name__ == "__main__":
     try:
@@ -14,5 +15,5 @@ if __name__ == "__main__":
     cl.sendFirstMessage(ip_bootstrapper,int(port_bootstrapper))
     cl.receiveFirstMessage()
     cl.sendMessage()
-    cl.receiveMessage()
-    cl.run()
+    th2 = threading.Thread(target = cl.receiveMessage).start()
+    th1 = threading.Thread(target= cl.run).start()

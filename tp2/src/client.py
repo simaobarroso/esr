@@ -40,17 +40,30 @@ class client:
 
     def dataTratamentType3(self, message,address):
         """ Função de tratamento de dados para mensagens com o type == 3 """
-        message = pickle.loads(message)
         if message["subtype"] == 'answer': # Pedido de streaming de um vídeo por parte de um cliente 
             message = pickle.dumps({"type":5,"nameVideo":"movie.Mjpeg"})
             self.socket.sendto(message,(self.ip,7777))
             print("ENVIEI")
+    
+    def dataTratamentType6(self, message,address):
+        print("ALEEEEE")
+        """ Função de tratamento de dados para mensagens com o type == 3 """
+        message["nameVideo"]="movie.Mjpeg"
+        message = pickle.dumps(message)
+        self.socket.sendto(message,(self.ip,7777))
         
                 
     def receiveMessage(self):
-        """ Receção de mensagens e tratamento das mesmas por parte do cliente """
-        message, address = self.socket.recvfrom(1024)
-        self.dataTratamentType3(message,address)
+        while True:
+            """ Receção de mensagens e tratamento das mesmas por parte do cliente """
+            print("OLAAAAAAAAAAAAAAAAAAAAA")
+            message, address = self.socket.recvfrom(1024)
+            message = pickle.loads(message)
+            print(message)
+            if message["type"]==6:
+                self.dataTratamentType6(message,address) 
+            else:
+                self.dataTratamentType3(message,address)
     
     def client_run(self):
         """ Interface gráfica co cliente """

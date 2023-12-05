@@ -78,8 +78,10 @@ class server:
         if message["subtype"] == 'request':
             if address not in self.clients:
                 self.clients.append(address)
+            print("AI MEU DEUS")
             id_cliente=message["id"]
             print("Mensagem do cliente " + str(id_cliente))
+            print(self.runningVideos)
             if message["nameVideo"] in self.runningVideos: # O router possui as streams de vídeo desejadas por isso vou mandar para o router vizinho
                 message=pickle.dumps({"type":4,"subtype":"answer","id":id_cliente,"data":0,"nameVideo":message["nameVideo"]})
                 self.socket.sendto(message,address)
@@ -136,16 +138,18 @@ class server:
         self.lock.acquire()
         try:
             if message["nameVideo"] not in self.paths:
-                self.paths[message["nameVideo"]] = []
-            self.paths[message["nameVideo"]].append(address)
+                self.paths[message["nameVideo"]] = {"destino":[],"fonte":""}
+            self.paths[message["nameVideo"]]["destino"].append(address)
         finally:
             self.lock.release()
 
         if self.rtpSocket is None or not isinstance(self.rtpSocket, socket.socket):
             self.openRtpPort()
             th1 = threading.Thread(target= self.listenRtp).start()
+            
         if message["nameVideo"] not in self.runningVideos: # O router não possui as streams de vídeo desejadas
             ip,port=self.paths2[message["nameVideo"]][0][0]
+            self.paths[message["nameVideo"]]["fonte"]=ip
             self.runningVideos.append(message["nameVideo"])
             message=pickle.dumps(message)
             #print(self.paths2)
@@ -160,10 +164,19 @@ class server:
                 print("Lista de envio de streams antes da remoção: "+str(self.paths[message["nameVideo"]]))
                 self.lock.acquire()
                 try:
-                    self.paths[message["nameVideo"]].remove(address)
+                    print(self.paths[message["nameVideo"]])
+                    print(address)
+                    self.paths[message["nameVideo"]]["destino"].remove(address)
                 finally:
                     self.lock.release()
                 print("Lista de envio de streams depois da remoção: "+str(self.paths[message["nameVideo"]]))
+                name_video=message["nameVideo"]
+                message=pickle.dumps({"type":6,"subtype":"request","data":"Close rtp connection ...","nameVideo":"movie.Mjpeg"})
+                print((self.paths[name_video]))
+                if (len(self.paths[name_video]["destino"])==0):
+                    self.runningVideos.remove(name_video)
+                    self.state=self.INIT
+                self.socket.sendto(message,(self.paths[name_video]["fonte"],7777))
             else:
                 print("NÃO ESTOU A TRANSMITIR ESSE VÍDEO ...")
 
@@ -243,7 +256,7 @@ class server:
     def sendRtpForServers(self,rtpPacket): 
         self.lock.acquire()
         try:
-            lista = self.paths[rtpPacket.nameVideo()]
+            lista = self.paths[rtpPacket.nameVideo()]["destino"]
         finally:
             self.lock.release()
         nameVideo = str(rtpPacket.nameVideo())
@@ -311,10 +324,10 @@ class server:
             self.state = self.TEARDOWN
             self.numberTeardown += 1 
             # Close the RTP socket
-            self.socketForClient.close()  
+            #self.socketForClient.close()  
             if len(self.clients) == self.numberTeardown:
                 print("FECHEI O SOCKET RTP. LOGO NÃO RECEBO STREAMS")
-                self.rtpSocket.close()
+                #self.rtpSocket.close()
                 for v in self.neighbours:
                     print("VOU ENVIAR O TEARDOWN DA LIGAÇÃO PARA OS MEUS VIZINHOS ...")
                     padrao = re.compile(r'(\d+\.\d+\.\d+\.\d+)-(\d+)')
@@ -328,7 +341,7 @@ class server:
 
     def run(self):
         #self.openRtpPort()
-        th = threading.Thread(target= self.serverWork).start()
+        th = threading.Thread(target=self.serverWork).start()
         #th1 = threading.Thread(target= self.listenRtp).start()
         rtspSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
         rtspSocket.bind((self.ip,5555))

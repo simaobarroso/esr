@@ -5,6 +5,7 @@ import socket
 from PIL import Image,ImageTk
 from RtspPacket import RtspPacket
 import tkinter.messagebox
+import pickle
 
 CACHE_FILE_NAME = "cache"
 CACHE_FILE_EXT = ".jpg"
@@ -143,6 +144,7 @@ class clientGUI:
     
     def sendRtspRequest(self,requestCode):
         """ Send RTSP request to the server content """
+        is_req_code=True
         if requestCode == self.SETUP and self.state == self.INIT:
             print("Vamos dar SETUP do vídeo")
             self.rtspSeq += 1
@@ -159,16 +161,23 @@ class clientGUI:
             type_request = self.PAUSE
             #self.requestSent = self.PAUSE
         elif requestCode == self.TEARDOWN and not self.state == self.INIT:
+            print("Comando certo")
+            is_req_code=False
             self.rtspSeq += 1
             print("Vamos dar TEARDOWN do vídeo")
             type_request = self.TEARDOWN
-            #self.requestSent = self.TEARDOWN
+            message= pickle.dumps({"type":6,"subtype":"request","data":"Close rtp connection ...","nameVideo":""})
+        else:
+            print("Comando errado")
 
-        request = RtspPacket()
-        request = request.encode(type_request,{})
-        
-        self.rtspSocket.sendto(request,self.rtspAddress)
-    
+        if is_req_code:    
+            request = RtspPacket()
+            request = request.encode(type_request,{})
+            self.rtspSocket.sendto(request,self.rtspAddress)
+        else:
+            print("Caminho certo2")
+            self.rtspSocket.sendto(message,('0.0.0.0',7777))
+
     def openRtpPort(self):
         """ Cria um socket RTP para receber o vídeo """
         self.rtpSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)

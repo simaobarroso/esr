@@ -82,10 +82,12 @@ class serverForStream:
 
         # Process TEARDOWN request
         elif requestType == self.TEARDOWN:
+            self.state=self.INIT
+            print("aqui")
             print("processing TEARDOWN\n")
 
             # Close the RTP socket
-            self.infoClient['rtpSocket'].close()
+            #self.infoClient['rtpSocket'].close()
 
     def sendRtp(self):
         """Send RTP packets over UDP."""

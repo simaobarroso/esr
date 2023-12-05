@@ -78,7 +78,7 @@ class bootstrapper:
             #self.playMovie()
     
     def dataTratamentType5(self,message,address):
-        print("AQUI")
+        print("AQUI AGORA")
         """ Função de tratamento de dados para mensagens com o type == 5 """
         if message["nameVideo"] in self.movies:
             self.lock.acquire()
@@ -92,6 +92,8 @@ class bootstrapper:
         if self.rtspSocket == None or not isinstance(self.rtspSocket, socket.socket):
             self.rtspSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
             self.rtspSocket.bind(('',5543))
+            self.rtpSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+            self.rtpSocket.bind(('',5555))
         self.setupMovie()
         self.playMovie()
 
@@ -104,11 +106,22 @@ class bootstrapper:
                 self.lock.acquire()
                 try:
                     self.trees[message["nameVideo"]].remove(address)
+                    #if self.trees[message["nameVideo"]]==[]:
+                        #self.trees.pop(message["nameVideo"])
+                    #self.state=self.INIT
                 finally:
                     self.lock.release()
                 print("Lista de envio de streams depois da remoção: "+str(self.trees[message["nameVideo"]]))
+                self.sendRtspRequest(self.TEARDOWN)
+            if len(self.trees)==0:
+                print("AQUI")
+                self.rtpSocket.close()
+                self.rtpSocket=None
+                self.rtspSocket.close()
+                self.rtspSocket=None
             else:
                 print("NÃO ESTOU A TRANSMITIR ESSE VÍDEO ...")
+        
                     
   
     def bootstrapperDataTratament(self,message,address):
@@ -149,6 +162,14 @@ class bootstrapper:
             print("Vamos dar PLAY do vídeo")
             type_request = self.PLAY
             self.requestSent = self.PLAY
+        elif requestCode == self.TEARDOWN and self.state == self.PLAYING:
+            self.rtspSeq += 1
+            print("Vamos dar TEARDOWN do vídeo")
+            type_request = self.TEARDOWN
+            self.requestSent = self.TEARDOWN
+        else:
+            print(requestCode)
+            print(self.state)
 
         request = RtspPacket()
         request = request.encode(type_request,{})
@@ -156,8 +177,16 @@ class bootstrapper:
         self.rtspSocket.sendto(request,(self.contentServer,7777))
 
     def setupMovie(self):
+        print("VOU MANDAR SEGUNDO PEDIDO")
+        print(self.state)
         """Vamos dar SETUP do vídeo"""
         if self.state == self.INIT:
+            self.sendRtspRequest(self.SETUP)
+            self.state = self.READY
+            self.openRtpPort()
+        
+        else:
+            self.state=self.INIT
             self.sendRtspRequest(self.SETUP)
             self.state = self.READY
             self.openRtpPort()
@@ -177,26 +206,31 @@ class bootstrapper:
     def listenRtp(self):
         """ Leitura dos pacotes RTP """
         while True:
+            try:
                 data = self.rtpSocket.recv(20480000)
-                global packet_counter
-                packet_counter += 1 # Cálculo do número de pacotes recebidos
-                current_time = time.time() # Cálculo do timestamp do pacote 
-                packet_times.append(current_time) # Inserção dos timestamp numa lista
-                self.calculate_metrics()
-                #print("Estou a enviar um pedido RTSP para este contentServer: "+ str(self.contentServer))
-                if data:
-                    rtpPacket = RtpPacket()
-                    rtpPacket.decode(data)
-                    
+            except:
+                print("Socket desativado")
+                break
+            global packet_counter
+            packet_counter += 1 # Cálculo do número de pacotes recebidos
+            current_time = time.time() # Cálculo do timestamp do pacote 
+            packet_times.append(current_time) # Inserção dos timestamp numa lista
+            self.calculate_metrics()
+            #print("Estou a enviar um pedido RTSP para este contentServer: "+ str(self.contentServer))
+            if data:
+                rtpPacket = RtpPacket()
+                rtpPacket.decode(data)
+                
 
-                    currentNumberFrame = rtpPacket.seqNum()
-                    # print("Este é o current Number Frame:" + str(currentNumberFrame))
-                    th = threading.Thread(target= self.sendRtpForServers, args=(rtpPacket,)).start()
-                    # th.join()
-                    # Agora é transmitir para os vizinhos 
-                    if currentNumberFrame > self.frameNbr:
-                        self.frameNbr = currentNumberFrame
-                        # Temos de ver o que fazer 
+                currentNumberFrame = rtpPacket.seqNum()
+                # print("Este é o current Number Frame:" + str(currentNumberFrame))
+                th = threading.Thread(target= self.sendRtpForServers, args=(rtpPacket,)).start()
+                # th.join()
+                # Agora é transmitir para os vizinhos 
+                if currentNumberFrame > self.frameNbr:
+                    self.frameNbr = currentNumberFrame
+                    # Temos de ver o que fazer
+
     def playMovie(self):
         """ O RP pede o vídeo ao Contente Server """
         if self.state == self.READY:
