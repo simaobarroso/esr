@@ -148,9 +148,9 @@ class server:
             print("ENVIEI TIPO 5 PARA " + str(ip))
             self.socket.sendto(message,(ip,port))
 
-    def dataTratamentType2(self,message,address):
-        """ Tratamento das mensagens do tipo 2 """
-        print("ESTOU A TRATAR AS MENSAGENS COM O TIPO 2 ")
+    def dataTratamentType6(self,message,address):
+        """ Tratamento das mensagens do tipo 6 """
+        print("ESTOU A TRATAR AS MENSAGENS COM O TIPO 6 ")
         if message["subtype"] == "request" and message["data"] == "Close rtp connection ...":
             if message["nameVideo"] in self.runningVideos:
                 print("Lista de envio de streams antes da remoção: "+str(self.paths[message["nameVideo"]]))
@@ -170,8 +170,8 @@ class server:
             self.dataTratamentType4(message,address)
         if message["type"] == 5: # Se o tipo da mensagem for de fazer flood na rede 
             self.dataTratamentType5(message,address)
-        if message["type"] == 2: # Se o tipo da mensagem for de fazer flood na rede 
-            self.dataTratamentType2(message,address)
+        if message["type"] == 6: # Se o tipo da mensagem for de fazer flood na rede 
+            self.dataTratamentType6(message,address)
 
     def sendFirstMessage(self,ip,port):
         """ Envio da mensagem inicial de um servidor oNode para um bootstrapper, para saber os seus vizinhos """
@@ -319,7 +319,7 @@ class server:
                         # Extrai os valores correspondentes
                         ip = matching.group(1)
                         porta = int(matching.group(2))
-                        message=pickle.dumps({"type":2,"subtype":"request","data":"Close rtp connection ...","nameVideo":"movie.Mjpeg"})
+                        message=pickle.dumps({"type":6,"subtype":"request","data":"Close rtp connection ...","nameVideo":"movie.Mjpeg"})
                         self.socket.sendto(message,(ip,porta))
 
     def run(self):

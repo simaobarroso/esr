@@ -93,6 +93,20 @@ class bootstrapper:
         self.setupMovie()
         self.playMovie()
 
+    def dataTratamentType6(self,message,address):
+        """ Tratamento das mensagens do tipo 6 """
+        print("ESTOU A TRATAR AS MENSAGENS COM O TIPO 6 ")
+        if message["subtype"] == "request" and message["data"] == "Close rtp connection ...":
+            if message["nameVideo"] in self.movies:
+                print("Lista de envio de streams antes da remoção: "+str(self.trees[message["nameVideo"]]))
+                self.lock.acquire()
+                try:
+                    self.trees[message["nameVideo"]].remove(address)
+                finally:
+                    self.lock.release()
+                print("Lista de envio de streams depois da remoção: "+str(self.trees[message["nameVideo"]]))
+            else:
+                print("NÃO ESTOU A TRANSMITIR ESSE VÍDEO ...")
                     
   
     def bootstrapperDataTratament(self,message,address):
@@ -110,6 +124,8 @@ class bootstrapper:
             self.dataTratamentType4(message,address)
         elif message["type"] == 5:
             self.dataTratamentType5(message,address)    
+        elif message["type"] == 6:
+            self.dataTratamentType6(message,address) 
 
 
     def bootstrapperWork(self):
