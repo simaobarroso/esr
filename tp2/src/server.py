@@ -76,42 +76,57 @@ class server:
         if message["subtype"] == 'request':
             if address not in self.clients:
                 self.clients.append(address)
-            id_message=message["id"]
+            id_cliente=message["id"]
+            print("Mesagem do cliente " + str(id_cliente))
             if message["nameVideo"] in self.runningVideos: # O router possui as streams de vídeo desejadas por isso vou mandar para o router vizinho
-                message=pickle.dumps({"type":4,"subtype":"answer","id":id_message,"data":0,"nameVideo":message["nameVideo"]})
+                message=pickle.dumps({"type":4,"subtype":"answer","id":id_cliente,"data":0,"nameVideo":message["nameVideo"]})
                 self.socket.sendto(message,address)
             else : # O router não possui a stream de vídeo desejada, logo terá de perguntar aos vizinhos se têm 
                 print("Flood da rede propagado para os vizinhos ...")
                 self.messages[message["id"]]= address
-                message=pickle.dumps({"type":4,"subtype":"request","id":id_message,"nameVideo":message["nameVideo"]})
+                message=pickle.dumps({"type":4,"subtype":"request","id":id_cliente,"nameVideo":message["nameVideo"]})
                 self.flood(message,address)
 
         elif message["subtype"] == 'answer':
-                print("Answer da rede propagado para quem enviou a pergunta")
-                print(str(self.messages))
-                print(message["id"])
-                ip_dest= self.messages[message["id"]]
-                message["data"] += 1
-                if(message["nameVideo"]) not in self.paths2:
-                    self.paths2[message["nameVideo"]]=[]
-                self.paths2[message["nameVideo"]].append((address,message["data"]))
-                
-                message = pickle.dumps(message)
-                print("OS MEUS VIZINHO SÃO" + str(self.neighbours))
-                print("O pedido para mandar é "+ str(ip_dest))
-                for a in self.neighbours:
-                    ip_Porta = a.split('-')
-                    ip = ip_Porta[0]
-                    port = int(ip_Porta[1])
-                    print("Teste: "+str(ip)+" ,  "+str(ip_dest[0]))
-                    if ip==ip_dest[0]:
-                        print("redirecionei a resposta para o "+ip_dest[0])
-                        self.socket.sendto(message,ip_dest)
-                for cl in self.clients:
-                    message=pickle.dumps({"type":4,"subtype":"answer","id":ip_dest,"data":"A stream pedida irá ser transmitida ..."})
-                    print("redirecionei a resposta para o "+str(cl))
-                    self.socket.sendto(message,cl)
-                self.clients = []
+            print("Answer da rede propagado para quem enviou a pergunta")
+            print(str(self.messages))
+            print("RECBI ESTA MENSAGEM " +str(message["id"]) + " do endereço " + str(address))
+            print(message)
+            ip_dest= self.messages[message["id"]]
+            message["data"] += 1
+            if(message["nameVideo"]) not in self.paths2:
+                self.paths2[message["nameVideo"]]=[]
+            self.paths2[message["nameVideo"]].append((address,message["data"]))
+            
+            print("RECBI ESTA MENSAGEM olee " +str(message["id"]))
+            message = pickle.dumps(message)
+            print("OS MEUS VIZINHO SÃO" + str(self.neighbours))
+            print("O pedido para mandar é "+ str(ip_dest))
+            
+            for cl in self.clients:
+                #message=pickle.dumps({"type":4,"subtype":"answer","id":ip_dest,"data":"A stream pedida irá ser transmitida ..."})
+                #print("redirecionei a resposta para o "+str(cl))
+                self.socket.sendto(message,cl)
+            """
+            for a in self.neighbours:
+                ip_Porta = a.split('-')
+                ip = ip_Porta[0]
+                port = int(ip_Porta[1])
+                print("Teste: "+str(ip)+" ,  "+str(ip_dest[0]))
+                if ip==ip_dest[0]:
+                    print("redirecionei a resposta para o "+ip_dest[0])
+                    self.socket.sendto(message,ip_dest)
+            """
+            #for cl in self.clients:
+                #message=pickle.dumps({"type":4,"subtype":"answer","id":ip_dest,"data":"A stream pedida irá ser transmitida ..."})
+                #print("redirecionei a resposta para o "+str(cl))
+                #self.socket.sendto(message,cl)
+            
+            #if ip_dest in self.clients:
+                #message=pickle.dumps({"type":4,"subtype":"answer","id":ip_dest,"data":"A stream pedida irá ser transmitida ..."})
+                #print("redirecionei a resposta para o "+str(cl))
+                #self.socket.sendto(message,ip_dest)
+            #self.clients.remove(ip_dest)
         
     def dataTratamentType5(self, message,address):
         """ Função de tratamento de dados para mensagens com o type == 5 """ 
@@ -131,9 +146,6 @@ class server:
             print("ENVIEI TIPO 5 PARA " + str(ip))
             self.socket.sendto(message,(ip,port))
 
-
-
-        
 
     def dataTratament(self,message,address):
         """ Função de tratamento dos dados recebidos no socket UDP """
@@ -192,9 +204,9 @@ class server:
                         #print("Estou a receber streams de vídeo dos meus vizinhos")
                         #print("Este é o current Number Frame:" + str(currentNumberFrame))
                         th = threading.Thread(target= self.sendRtpForServers, args=(rtpPacket,)).start()
-                        print("ESTE É O MEU ESTADO1: "+ str(self.state))
+                        #print("ESTE É O MEU ESTADO1: "+ str(self.state))
                         if self.state == self.PLAYING:
-                            print("ESTE É O MEU ESTADO2: "+ str(self.state))
+                            #print("ESTE É O MEU ESTADO2: "+ str(self.state))
                             th1 = threading.Thread(target= self.sendRtpForClients, args=(rtpPacket,)).start()
                         # th.join()
             except: # Para o vídeo quando está em PAUSE ou em TEARDOWN 

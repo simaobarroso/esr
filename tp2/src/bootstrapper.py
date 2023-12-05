@@ -66,7 +66,8 @@ class bootstrapper:
 
     def dataTratamentType4(self,message,address):
         """ Função de tratamento de dados para mensagens com o type == 4 """
-        if message["subtype"] == 'request':  # Resposta ás mensagens de flood recebidas pelo RP 
+        if message["subtype"] == 'request':  # Resposta ás mensagens de flood recebidas pelo RP
+            print(message["id"]) 
             answer=pickle.dumps({"type":4,"subtype":"answer","id":message["id"],"data":0,"nameVideo":message["nameVideo"]})
             self.socket.sendto(answer,address)
             # Conexão entre RP e o contentServer para pedir uma stream de vídeo ... 
@@ -133,7 +134,7 @@ class bootstrapper:
 
         request = RtspPacket()
         request = request.encode(type_request,{})
-        print("Estou a enviar um pedido RTSP para este contentServer: "+ str(self.contentServer))
+        #print("Estou a enviar um pedido RTSP para este contentServer: "+ str(self.contentServer))
         self.rtspSocket.sendto(request,(self.contentServer,7777))
 
     def setupMovie(self):
@@ -164,7 +165,7 @@ class bootstrapper:
                 current_time = time.time() # Cálculo do timestamp do pacote 
                 packet_times.append(current_time) # Inserção dos timestamp numa lista
                 self.calculate_metrics()
-                print("Estou a enviar um pedido RTSP para este contentServer: "+ str(self.contentServer))
+                #print("Estou a enviar um pedido RTSP para este contentServer: "+ str(self.contentServer))
                 if data:
                     rtpPacket = RtpPacket()
                     rtpPacket.decode(data)
@@ -196,11 +197,11 @@ class bootstrapper:
         nameVideo = str(rtpPacket.nameVideo())
         data = rtpPacket.getPayload()
         frameNumber = int(rtpPacket.seqNum())
-        print("Estou a mandar este frame number:"+ str(frameNumber))
+        #print("Estou a mandar este frame number:"+ str(frameNumber))
         socketForServers = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
         for ip,port in lista:
             
-            print("Estou a retransmitir as streams para o endereço: "+ str((ip,5543)))
+            #print("Estou a retransmitir as streams para o endereço: "+ str((ip,5543)))
             socketForServers.sendto(RtpPacket.makeNewRtp(nameVideo,data,frameNumber),(ip,5543))
     
     def calculate_metrics(self):
