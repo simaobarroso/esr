@@ -20,6 +20,4 @@ if __name__ == "__main__":
     th1.start()
     th2.start()
     th1.join()
-    print("Acabei")
     th2.join()
-    print("Terminei")

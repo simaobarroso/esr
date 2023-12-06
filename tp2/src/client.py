@@ -45,7 +45,6 @@ class client:
         if message["subtype"] == 'answer': # Pedido de streaming de um vídeo por parte de um cliente 
             message = pickle.dumps({"type":5,"nameVideo":"movie.Mjpeg"})
             self.socket.sendto(message,(self.ip,7777))
-            print("ENVIEI")
     
     # Dar teardown à stream
     def dataTratamentType6(self, message,address):
@@ -60,11 +59,10 @@ class client:
     def receiveMessage(self):
         
         while self.socket != None:
-            print("aqui")
             """ Receção de mensagens e tratamento das mesmas por parte do cliente """
             message, address = self.socket.recvfrom(1024)
             message = pickle.loads(message)
-            print(message)
+            #print(message)
             if message["type"]==6:
                 self.dataTratamentType6(message,address) 
             else:
@@ -81,5 +79,4 @@ class client:
     def run(self):
         """ Criação da interface gráfica do cliente """
         self.client_run()
-        print("oleeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
 

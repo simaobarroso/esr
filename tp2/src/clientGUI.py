@@ -86,7 +86,6 @@ class clientGUI:
     def pauseMovie(self):
         """ Pause button handler """
         if self.state == self.PLAYING:
-            print("aqui")
             self.sendRtspRequest(self.PAUSE)
             self.state = self.READY
             self.playEvent.set()
@@ -103,8 +102,6 @@ class clientGUI:
     def listenRtp(self):
         """ Listen for RTP packets """
         while True:
-            print(self.state)
-            print("ainda entrei aqui")
             try:
                 if self.state == self.PLAYING:
                     data = self.rtpSocket.recv(20480000)
@@ -112,15 +109,14 @@ class clientGUI:
                         rtpPacket = RtpPacket()
                         rtpPacket.decode(data)
                         currentNumberFrame = rtpPacket.seqNum()
-                        print("Estou a receber streams de vídeo dos meus vizinhos")
-                        print("Este é o current Number Frame:" + str(currentNumberFrame))
+                        #print("Estou a receber streams de vídeo dos meus vizinhos")
+                        #print("Este é o current Number Frame:" + str(currentNumberFrame))
                         if currentNumberFrame > self.frameNbr :
                             self.frameNbr = currentNumberFrame
                         cachename = self.writeFrame(rtpPacket.getPayload())
                         self.updateMovie(cachename)
                 
                 elif self.state == self.FINISHING:
-                    print("oleoleoleole")
                     self.rtpSocket.close()
                     #self.rtpSocket=None
                     self.master.destroy()
@@ -178,9 +174,7 @@ class clientGUI:
             request = request.encode(type_request,{})
             self.rtspSocket.sendto(request,self.rtspAddress)
         else:
-            print("Caminho certo2")
             self.rtspSocket.sendto(message,('0.0.0.0',7777))
-            print("Certissimo")
 
     def openRtpPort(self):
         """ Cria um socket RTP para receber o vídeo """
