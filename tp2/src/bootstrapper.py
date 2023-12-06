@@ -68,7 +68,6 @@ class bootstrapper:
     def dataTratamentType4(self,message,address):
         """ Função de tratamento de dados para mensagens com o type == 4 """
         if message["subtype"] == 'request':  # Resposta ás mensagens de flood recebidas pelo RP
-            print(message["id"]) 
             answer=pickle.dumps({"type":4,"subtype":"answer","id":message["id"],"data":0,"nameVideo":message["nameVideo"]})
             self.socket.sendto(answer,address)
             # Conexão entre RP e o contentServer para pedir uma stream de vídeo ... 
@@ -78,7 +77,6 @@ class bootstrapper:
             #self.playMovie()
     
     def dataTratamentType5(self,message,address):
-        print("AQUI AGORA")
         """ Função de tratamento de dados para mensagens com o type == 5 """
         if message["nameVideo"] in self.movies:
             self.lock.acquire()
@@ -99,10 +97,9 @@ class bootstrapper:
 
     def dataTratamentType6(self,message,address):
         """ Tratamento das mensagens do tipo 6 """
-        print("ESTOU A TRATAR AS MENSAGENS COM O TIPO 6 ")
         if message["subtype"] == "request" and message["data"] == "Close rtp connection ...":
             if message["nameVideo"] in self.movies:
-                print("Lista de envio de streams antes da remoção: "+str(self.trees[message["nameVideo"]]))
+                #print("Lista de envio de streams antes da remoção: "+str(self.trees[message["nameVideo"]]))
                 self.lock.acquire()
                 try:
                     self.trees[message["nameVideo"]].remove(address)
@@ -111,10 +108,9 @@ class bootstrapper:
                     #self.state=self.INIT
                 finally:
                     self.lock.release()
-                print("Lista de envio de streams depois da remoção: "+str(self.trees[message["nameVideo"]]))
+                #print("Lista de envio de streams depois da remoção: "+str(self.trees[message["nameVideo"]]))
                 self.sendRtspRequest(self.TEARDOWN)
             if len(self.trees)==0:
-                print("AQUI")
                 self.rtpSocket.close()
                 self.rtpSocket=None
                 self.rtspSocket.close()
@@ -168,8 +164,9 @@ class bootstrapper:
             type_request = self.TEARDOWN
             self.requestSent = self.TEARDOWN
         else:
-            print(requestCode)
-            print(self.state)
+            #print(requestCode)
+            #print(self.state)
+            print("Valores inválidos "+ (str(requestCode))+ " " +str(self.state) )
 
         request = RtspPacket()
         request = request.encode(type_request,{})
@@ -177,8 +174,7 @@ class bootstrapper:
         self.rtspSocket.sendto(request,(self.contentServer,7777))
 
     def setupMovie(self):
-        print("VOU MANDAR SEGUNDO PEDIDO")
-        print(self.state)
+        #print(self.state)
         """Vamos dar SETUP do vídeo"""
         if self.state == self.INIT:
             self.sendRtspRequest(self.SETUP)
