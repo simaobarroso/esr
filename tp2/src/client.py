@@ -53,10 +53,14 @@ class client:
         message["nameVideo"]="movie.Mjpeg"
         message = pickle.dumps(message)
         self.socket.sendto(message,(self.ip,7777))
+        self.socket.close()
+        self.socket=None
         
                 
     def receiveMessage(self):
-        while True:
+        
+        while self.socket != None:
+            print("aqui")
             """ Receção de mensagens e tratamento das mesmas por parte do cliente """
             message, address = self.socket.recvfrom(1024)
             message = pickle.loads(message)
@@ -65,6 +69,7 @@ class client:
                 self.dataTratamentType6(message,address) 
             else:
                 self.dataTratamentType3(message,address)
+        print("Socket terminado")
     
     def client_run(self):
         """ Interface gráfica co cliente """
@@ -76,4 +81,5 @@ class client:
     def run(self):
         """ Criação da interface gráfica do cliente """
         self.client_run()
+        print("oleeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
 

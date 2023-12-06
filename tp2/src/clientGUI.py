@@ -21,6 +21,7 @@ class clientGUI:
     INIT = 0 
     READY = 1 
     PLAYING = 2
+    FINISHING = 3 
     state = INIT 
 
     def __init__(self,master,neighbourAddress,socketStream,ipHost):
@@ -76,11 +77,16 @@ class clientGUI:
     def exitClient(self):
         """ Teardown button handler """
         self.sendRtspRequest(self.TEARDOWN)
-        self.master.destroy()
+        self.state = self.FINISHING
+        #self.rtpSocket.shutdown(socket.SOCK_DGRAM)
+        #self.rtpSocket.close()
+        #self.rtpSocket=None
+        #self.master.destroy()
 
     def pauseMovie(self):
         """ Pause button handler """
         if self.state == self.PLAYING:
+            print("aqui")
             self.sendRtspRequest(self.PAUSE)
             self.state = self.READY
             self.playEvent.set()
@@ -97,9 +103,10 @@ class clientGUI:
     def listenRtp(self):
         """ Listen for RTP packets """
         while True:
+            print(self.state)
+            print("ainda entrei aqui")
             try:
                 if self.state == self.PLAYING:
-                    print("ole")
                     data = self.rtpSocket.recv(20480000)
                     if data:
                         rtpPacket = RtpPacket()
@@ -111,21 +118,18 @@ class clientGUI:
                             self.frameNbr = currentNumberFrame
                         cachename = self.writeFrame(rtpPacket.getPayload())
                         self.updateMovie(cachename)
-            except Exception as e: # Para o vídeo quando está em PAUSE ou em TEARDOWN 
-                if self.playEvent.isSet():
-                    print("aqui1")
-                    break
-
-                if self.teardownAcked == 1:
-                    print("aqui2")
-                    self.rtpSocket.shutdown(socket.SHUT_RDWR)
+                
+                elif self.state == self.FINISHING:
+                    print("oleoleoleole")
                     self.rtpSocket.close()
+                    #self.rtpSocket=None
+                    self.master.destroy()
+                    break
+                
+            except Exception as e: # Para o vídeo quando está em PAUSE ou em TEARDOWN 
+                print ("Problema detetado: "+str(e))
+        print("Esta fechado")
 
-
-                print("aqui3")
-                print(e)
-                break
-    
     def writeFrame(self,data):
         cachename = str(self.ipHost)+"_"+CACHE_FILE_NAME + CACHE_FILE_EXT
         file = open(cachename, "wb")
@@ -160,8 +164,7 @@ class clientGUI:
             print("Vamos dar PAUSE do vídeo")
             type_request = self.PAUSE
             #self.requestSent = self.PAUSE
-        elif requestCode == self.TEARDOWN and not self.state == self.INIT:
-            print("Comando certo")
+        elif requestCode == self.TEARDOWN:
             is_req_code=False
             self.rtspSeq += 1
             print("Vamos dar TEARDOWN do vídeo")
@@ -177,12 +180,13 @@ class clientGUI:
         else:
             print("Caminho certo2")
             self.rtspSocket.sendto(message,('0.0.0.0',7777))
+            print("Certissimo")
 
     def openRtpPort(self):
         """ Cria um socket RTP para receber o vídeo """
         self.rtpSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
 
-        # self.rtpSocket.settimeout(0.5)
+        self.rtpSocket.settimeout(1)
 
         try:
             self.rtpSocket.bind(('',5543))
