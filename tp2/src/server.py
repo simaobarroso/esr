@@ -30,7 +30,7 @@ class server:
         self.paths2 = {}  
         self.connectToNetwork()
         self.messages={}
-        self.clients=[]
+        #self.clients=[]
         self.lock = threading.Lock()
         self.numberTeardown = 0 
         self.rtpSocket=None
@@ -39,32 +39,8 @@ class server:
         """ Criação do socket UDP a partir do qual o servidor irá receber pedidos dos clientes """
         self.socket = socket.socket (socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind((self.ip,self.port))
-    """
-    def dataTratamentType3(self, message,address):
-        id_message=message["id"]
-        # Função de tratamento de dados para mensagens com o type == 3
-        self.clients.append(address)
+        self.socketForClient=None
 
-        print(message)
-        if message["subtype"] == 'request': # Pedido de streaming de um vídeo por parte de um cliente 
-            print(self.runningVideos)
-            if message["nameVideo"] in self.runningVideos: # O router possui as streams de vídeo desejadas 
-                message=pickle.dumps({"type":4,"subtype":"answer","id":id_message,"data":0,"nameVideo":message["nameVideo"]})
-                #print("Mandei mensagem para "+ str(ip))
-                self.socket.sendto(message,address)
-                
-            else : # O router não possui a stream de vídeo desejada, logo terá de perguntar aos vizinhos se têm 
-                print("Flood da rede propagado para os vizinhos ...")
-                self.messages[message["id"]]=address
-                
-                message=pickle.dumps({"type":4,"subtype":"request","id":id_message,"nameVideo":message["nameVideo"]})
-                for a in self.neighbours:
-                    ip_Porta = a.split('-')
-                    ip = ip_Porta[0]
-                    port = int(ip_Porta[1])
-                    if ip != address[0]:
-                        self.socket.sendto(message,(ip,port))
-    """
     def flood(self,message,address):
         for a in self.neighbours:
             ip_Porta = a.split('-')
@@ -76,9 +52,8 @@ class server:
     def dataTratamentType4(self,message,address):
         """ Função de tratamento de dados para mensagens com o type == 4 """
         if message["subtype"] == 'request':
-            if address not in self.clients:
-                self.clients.append(address)
-            print("AI MEU DEUS")
+            #if address not in self.clients:
+                #self.clients.append(address)
             id_cliente=message["id"]
             print("Mensagem do cliente " + str(id_cliente))
             print(self.runningVideos)
@@ -108,30 +83,9 @@ class server:
                 print("OS MEUS VIZINHO SÃO" + str(self.neighbours))
                 print("O pedido para mandar é "+ str(ip_dest))
                 
-                for cl in self.clients:
-                    #message=pickle.dumps({"type":4,"subtype":"answer","id":ip_dest,"data":"A stream pedida irá ser transmitida ..."})
-                    #print("redirecionei a resposta para o "+str(cl))
-                    self.socket.sendto(message,cl)
-                """
-                for a in self.neighbours:
-                    ip_Porta = a.split('-')
-                    ip = ip_Porta[0]
-                    port = int(ip_Porta[1])
-                    print("Teste: "+str(ip)+" ,  "+str(ip_dest[0]))
-                    if ip==ip_dest[0]:
-                        print("redirecionei a resposta para o "+ip_dest[0])
-                        self.socket.sendto(message,ip_dest)
-                """
+                self.socket.sendto(message,ip_dest)
                 #for cl in self.clients:
-                    #message=pickle.dumps({"type":4,"subtype":"answer","id":ip_dest,"data":"A stream pedida irá ser transmitida ..."})
-                    #print("redirecionei a resposta para o "+str(cl))
                     #self.socket.sendto(message,cl)
-                
-                #if ip_dest in self.clients:
-                    #message=pickle.dumps({"type":4,"subtype":"answer","id":ip_dest,"data":"A stream pedida irá ser transmitida ..."})
-                    #print("redirecionei a resposta para o "+str(cl))
-                    #self.socket.sendto(message,ip_dest)
-                #self.clients.remove(ip_dest)
         
     def dataTratamentType5(self, message,address):
         """ Função de tratamento de dados para mensagens com o type == 5 """ 
@@ -176,7 +130,7 @@ class server:
                 if (len(self.paths[name_video]["destino"])==0):
                     self.runningVideos.remove(name_video)
                     self.state=self.INIT
-                self.socket.sendto(message,(self.paths[name_video]["fonte"],7777))
+                    self.socket.sendto(message,(self.paths[name_video]["fonte"],7777))
             else:
                 print("NÃO ESTOU A TRANSMITIR ESSE VÍDEO ...")
 
@@ -245,12 +199,6 @@ class server:
                             th1 = threading.Thread(target= self.sendRtpForClients, args=(rtpPacket,)).start()
                         # th.join()
             except: # Para o vídeo quando está em PAUSE ou em TEARDOWN 
-                #if self.playEvent.isSet():
-                    #break
-
-                #if self.teardownAcked == 1:
-                    #self.rtpSocket.shutdown(socket.SHUT_RDWR)
-                    #self.rtpSocket.close()
                 break
     
     def sendRtpForServers(self,rtpPacket): 
@@ -269,19 +217,21 @@ class server:
 
     def sendRtpForClients(self,rtpPacket):
         self.lock.acquire()
+        name_video=rtpPacket.nameVideo()
         try:
-            lista = self.clients
+            #lista = self.clients
+            lista = self.paths[name_video]["destino"]
         finally:
             self.lock.release()
         if self.state == self.PLAYING:
             #print("ESTOU A ENVIAR PARA O CLIENTE. TENHO ESTE ESTADO:"+ str(self.state))
-            nameVideo = str(rtpPacket.nameVideo())
             data = rtpPacket.getPayload()
             frameNumber = int(rtpPacket.seqNum())
-            self.socketForClient = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+            if  self.socketForClient is None or not isinstance(self.socketForClient, socket.socket):
+                self.socketForClient = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
             for elem in lista:
                 #print("Estou a retransmitir as streams para os clientes endereço: "+ str(elem[0]) + " na porta 5543")
-                self.socketForClient.sendto(RtpPacket.makeNewRtp(nameVideo,data,frameNumber),(elem[0],5543))
+                self.socketForClient.sendto(RtpPacket.makeNewRtp(name_video,data,frameNumber),(elem[0],5543))
     
     def receiveRtspPackets(self,rtspSocket):
         """ Receção das mensagens do tipo RTSP """
@@ -296,8 +246,6 @@ class server:
     def processRtspRequest(self,dados):
         """Processamento dos pedidos RTSP """  
         requestType = dados.type
-        print(requestType)
-        print("ESTOU AQUI ")
 		# Process SETUP request
         if requestType == self.SETUP:
             if self.state == self.INIT:
@@ -324,20 +272,7 @@ class server:
             self.state = self.TEARDOWN
             self.numberTeardown += 1 
             # Close the RTP socket
-            #self.socketForClient.close()  
-            if len(self.clients) == self.numberTeardown:
-                print("FECHEI O SOCKET RTP. LOGO NÃO RECEBO STREAMS")
-                #self.rtpSocket.close()
-                for v in self.neighbours:
-                    print("VOU ENVIAR O TEARDOWN DA LIGAÇÃO PARA OS MEUS VIZINHOS ...")
-                    padrao = re.compile(r'(\d+\.\d+\.\d+\.\d+)-(\d+)')
-                    matching = padrao.match(v)
-                    if matching:
-                        # Extrai os valores correspondentes
-                        ip = matching.group(1)
-                        porta = int(matching.group(2))
-                        message=pickle.dumps({"type":6,"subtype":"request","data":"Close rtp connection ...","nameVideo":"movie.Mjpeg"})
-                        self.socket.sendto(message,(ip,porta))
+            #self.socketForClient.close()
 
     def run(self):
         #self.openRtpPort()
