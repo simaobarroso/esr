@@ -40,7 +40,7 @@ class client:
         self.port = int(listData[1])
         print("Mensagem recebida: O servidor contactável é este: "+self.ip+" na porta: "+str(self.port))
 
-    def dataTratamentType3(self, message,address):
+    def dataTratamentType4(self, message,address):
         """ Função de tratamento de dados para mensagens com o type == 3 """
         if message["subtype"] == 'answer': # Pedido de streaming de um vídeo por parte de um cliente 
             message = pickle.dumps({"type":5,"nameVideo":"movie.Mjpeg"})
@@ -48,7 +48,7 @@ class client:
     
     # Dar teardown à stream
     def dataTratamentType6(self, message,address):
-        """ Função de tratamento de dados para mensagens com o type == 3 """
+        """ Função de tratamento de dados para mensagens com o type == 6 """
         message["nameVideo"]="movie.Mjpeg"
         message = pickle.dumps(message)
         self.socket.sendto(message,(self.ip,7777))
@@ -66,7 +66,7 @@ class client:
             if message["type"]==6:
                 self.dataTratamentType6(message,address) 
             else:
-                self.dataTratamentType3(message,address)
+                self.dataTratamentType4(message,address)
         print("Socket terminado")
     
     def client_run(self):
