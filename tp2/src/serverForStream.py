@@ -58,8 +58,7 @@ class serverForStream:
     def processRtspRequest(self,dados):
         """Process RTSP request sent from the client."""
         requestType = dados.type
-        print(requestType)
-        print("ESTOU AQUI ")
+        #print(requestType)
 		# Process SETUP request
         if requestType == self.SETUP:
             if self.state == self.INIT:
@@ -83,7 +82,6 @@ class serverForStream:
         # Process TEARDOWN request
         elif requestType == self.TEARDOWN:
             self.state=self.INIT
-            print("aqui")
             print("processing TEARDOWN\n")
 
             # Close the RTP socket
@@ -98,8 +96,8 @@ class serverForStream:
                 frameNumber = self.infoClient['streaming'].frameNbr()
                 try:
                     if self.state == self.PLAYING:
-                        print("A enviar os pacotes do vídeo para o RP")
-                        print("Estou a enviar este frameNumber:"+str(frameNumber))
+                        #print("A enviar os pacotes do vídeo para o RP")
+                        #print("Estou a enviar este frameNumber:"+str(frameNumber))
                         #print("Estes são os dados:" + str(data))
                         self.infoClient['rtpSocket'].sendto(self.makeRtp(data,frameNumber) ,self.client)
                 except:

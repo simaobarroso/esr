@@ -90,6 +90,7 @@ class bootstrapper:
         if self.rtspSocket == None or not isinstance(self.rtspSocket, socket.socket):
             self.rtspSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
             self.rtspSocket.bind(('',5543))
+        if self.rtspSocket == None or not isinstance(self.rtspSocket, socket.socket):
             self.rtpSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
             self.rtpSocket.bind(('',5555))
         self.setupMovie()
@@ -103,8 +104,8 @@ class bootstrapper:
                 self.lock.acquire()
                 try:
                     self.trees[message["nameVideo"]].remove(address)
-                    #if self.trees[message["nameVideo"]]==[]:
-                        #self.trees.pop(message["nameVideo"])
+                    if self.trees[message["nameVideo"]]==[]:
+                        self.trees.pop(message["nameVideo"])
                     #self.state=self.INIT
                 finally:
                     self.lock.release()
@@ -125,7 +126,7 @@ class bootstrapper:
         print("O cliente com este endereço: %s submetou pedidos " % str(address))
         message = pickle.loads(message)
         if message["type"] == 1: # Resposta a pedidos dos routers, para saberem os seus vizinhos
-            print("Mensagem recebida : %s" % str(message))
+            #print("Mensagem recebida : %s" % str(message))
             message = message["ip"]  # Mensagem recebida pelo bootstrapper ->  É apenas um endereço IP, no caso de ser contactado pelos clientes no início de conexão
             answer=pickle.dumps({"type":1,"data":self.data[message]})
             self.socket.sendto(answer,address)

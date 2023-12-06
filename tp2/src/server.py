@@ -86,22 +86,12 @@ class server:
             self.paths[message["nameVideo"]] = {"destino":[],"fonte":""}
             ip,port=self.paths2[message["nameVideo"]][0][0]
             self.paths[message["nameVideo"]]["fonte"]=ip
-            #self.paths[message["nameVideo"]]["destino"].append(message["nameVideo"])
             message_env=pickle.dumps(message)
             #print(self.paths2)
             #print("ENVIEI TIPO 5 PARA " + str(ip))
             self.socket.sendto(message_env,(ip,port))
         
         self.paths[message["nameVideo"]]["destino"].append(address)
-            
-        
-        self.lock.acquire()
-        #try:
-            #if message["nameVideo"] not in self.paths:f
-                #self.paths[message["nameVideo"]] = {"destino":[],"fonte":""}
-            #self.paths[message["nameVideo"]]["destino"].append(address)
-        #finally:
-        self.lock.release()
 
         if self.rtpSocket is None or not isinstance(self.rtpSocket, socket.socket):
             self.openRtpPort()
@@ -119,15 +109,15 @@ class server:
                     self.paths[message["nameVideo"]]["destino"].remove(address)
                 finally:
                     self.lock.release()
-                print("Lista de envio de streams depois da remoção: "+str(self.paths[message["nameVideo"]]))
+                #print("Lista de envio de streams depois da remoção: "+str(self.paths[message["nameVideo"]]))
                 name_video=message["nameVideo"]
                 message=pickle.dumps({"type":6,"subtype":"request","data":"Close rtp connection ...","nameVideo":"movie.Mjpeg"})
-                print((self.paths[name_video]))
+                #print((self.paths[name_video]))
                 if (len(self.paths[name_video]["destino"])==0):
-                    ip=self.paths[name_video]["fonte"]
+                    ip_address=self.paths[name_video]["fonte"]
                     self.paths.pop(name_video)
                     self.state=self.INIT
-                    self.socket.sendto(message,(ip,7777))
+                    self.socket.sendto(message,(ip_address,7777))
             else:
                 print("NÃO ESTOU A TRANSMITIR ESSE VÍDEO ...")
 
@@ -161,7 +151,6 @@ class server:
             message, address = self.socket.recvfrom(1024)     # O servidor pode receber até 1024 bytes de informação
             t1 = threading.Thread(target=self.dataTratament,args=(message,address),name='t1') # Criação de threads para responder aos pedidos dos clientes
             t1.start()
-            t1.join()
         
         self.socket.close()
 
@@ -186,8 +175,8 @@ class server:
                         rtpPacket = RtpPacket()
                         rtpPacket.decode(data)
                         currentNumberFrame = rtpPacket.seqNum()
-                        print("Estou a receber streams de vídeo dos meus vizinhos")
-                        print("Este é o current Number Frame:" + str(currentNumberFrame))
+                        #print("Estou a receber streams de vídeo dos meus vizinhos")
+                        #print("Este é o current Number Frame:" + str(currentNumberFrame))
                         th = threading.Thread(target= self.sendRtpForServers, args=(rtpPacket,)).start()
                         #print("ESTE É O MEU ESTADO1: "+ str(self.state))
                         if self.state == self.PLAYING:
@@ -236,7 +225,7 @@ class server:
             if dados:
                 request = RtspPacket()
                 request = request.decode(dados)
-                print("Os dados recebidos foram:"+ request.type)
+                #print("Os dados recebidos foram:"+ request.type)
                 self.processRtspRequest(request)
 
     def processRtspRequest(self,dados):
