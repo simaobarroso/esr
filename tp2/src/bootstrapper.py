@@ -43,6 +43,7 @@ class bootstrapper:
         self.contentServer = ""
         self.listContentServer = []
         self.rtspSocket=None
+        self.rtpSocket=None
 
     def connectToNetwork(self):
         """ Criação do socket UDP a partir do qual o servidor bootstrapper irá receber pedidos dos clientes """
@@ -80,6 +81,7 @@ class bootstrapper:
         """ Função de tratamento de dados para mensagens com o type == 5 """
         if message["nameVideo"] in self.movies:
             self.lock.acquire()
+
             try:
                 if message["nameVideo"] not in self.trees:
                     self.trees[message["nameVideo"]] = []
@@ -90,9 +92,7 @@ class bootstrapper:
         if self.rtspSocket == None or not isinstance(self.rtspSocket, socket.socket):
             self.rtspSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
             self.rtspSocket.bind(('',5543))
-        if self.rtspSocket == None or not isinstance(self.rtspSocket, socket.socket):
-            self.rtpSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-            self.rtpSocket.bind(('',5555))
+
         self.setupMovie()
         self.playMovie()
 
@@ -110,8 +110,8 @@ class bootstrapper:
                 finally:
                     self.lock.release()
                 #print("Lista de envio de streams depois da remoção: "+str(self.trees[message["nameVideo"]]))
-                self.sendRtspRequest(self.TEARDOWN)
             if len(self.trees)==0:
+                self.sendRtspRequest(self.TEARDOWN)
                 self.rtpSocket.close()
                 self.rtpSocket=None
                 self.rtspSocket.close()
@@ -190,15 +190,16 @@ class bootstrapper:
     
     def openRtpPort(self):
         """ Cria um socket RTP para receber o vídeo """
-        self.rtpSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+        if self.rtpSocket==None:
+            self.rtpSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
 
-        self.rtpSocket.settimeout(0.5)
+            self.rtpSocket.settimeout(0.5)
 
-        try:
-            self.rtpSocket.bind(('',5555))
-            print("Bind do socket RTP")
-        except:
-            print("Erro no bind do socket ...")
+            try:
+                self.rtpSocket.bind(('',5555))
+                print("Bind do socket RTP")
+            except:
+                print("Erro no bind do socket ...")
 
     def listenRtp(self):
         """ Leitura dos pacotes RTP """
@@ -206,7 +207,7 @@ class bootstrapper:
             try:
                 data = self.rtpSocket.recv(20480000)
             except:
-                print("Socket desativado")
+                #print("Socket desativado")
                 break
             global packet_counter
             packet_counter += 1 # Cálculo do número de pacotes recebidos
